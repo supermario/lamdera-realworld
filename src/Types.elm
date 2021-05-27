@@ -1,5 +1,7 @@
 module Types exposing (..)
 
+import Api.Data exposing (..)
+import Bridge
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Gen.Pages as Pages
@@ -28,8 +30,8 @@ type FrontendMsg
     | Noop
 
 
-type ToBackend
-    = NoOpToBackend
+type alias ToBackend =
+    Bridge.ToBackend
 
 
 type BackendMsg
@@ -37,4 +39,5 @@ type BackendMsg
 
 
 type ToFrontend
-    = NoOpToFrontend
+    = PageMsg Pages.Msg
+    | NoOpToFrontend

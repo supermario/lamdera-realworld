@@ -1,14 +1,15 @@
-module Pages.Home_ exposing (Model, Msg, page)
+module Pages.Home_ exposing (Model, Msg(..), page)
 
 import Api.Article exposing (Article)
 import Api.Article.Filters as Filters
-import Api.Article.Tag exposing (Tag)
 import Api.Data exposing (Data)
 import Api.User exposing (User)
+import Bridge exposing (..)
 import Components.ArticleList
 import Html exposing (..)
 import Html.Attributes exposing (class, classList)
 import Html.Events as Events
+import Lamdera
 import Page exposing (Page)
 import Request exposing (Request)
 import Shared
@@ -64,7 +65,7 @@ init shared =
     ( model
     , Cmd.batch
         [ fetchArticlesForTab shared model
-        , Api.Article.Tag.list { onResponse = GotTags }
+        , Lamdera.sendToBackend GetTags
         ]
     )
 
@@ -117,6 +118,10 @@ type Msg
     | ClickedUnfavorite User Article
     | ClickedPage Int
     | UpdatedArticle (Data Article)
+
+
+type alias Tag =
+    String
 
 
 update : Shared.Model -> Msg -> Model -> ( Model, Cmd Msg )

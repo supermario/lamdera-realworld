@@ -1,5 +1,6 @@
 module Frontend exposing (..)
 
+import Bridge exposing (..)
 import Browser exposing (UrlRequest(..))
 import Browser.Dom
 import Browser.Navigation as Nav exposing (Key)
@@ -14,7 +15,7 @@ import Lamdera
 import Request
 import Shared
 import Task
-import Types exposing (..)
+import Types exposing (FrontendModel, FrontendMsg(..), ToFrontend(..))
 import Url exposing (Url)
 import View
 
@@ -131,6 +132,9 @@ update msg model =
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
     case msg of
+        PageMsg pageMsg ->
+            update (Page pageMsg) model
+
         NoOpToFrontend ->
             ( model, Cmd.none )
 
