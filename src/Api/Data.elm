@@ -1,12 +1,10 @@
 module Api.Data exposing
     ( Data(..)
-    , expectJson
     , map
     , toMaybe
     )
 
 import Http
-import Json.Decode as Json
 
 
 type Data value
@@ -40,44 +38,6 @@ toMaybe data =
 
         _ ->
             Nothing
-
-
-expectJson : (Data value -> msg) -> Json.Decoder value -> Http.Expect msg
-expectJson toMsg decoder =
-    Http.expectStringResponse (fromResult >> toMsg) <|
-        \response ->
-            case response of
-                Http.BadUrl_ _ ->
-                    Err [ "Bad URL" ]
-
-                Http.Timeout_ ->
-                    Err [ "Request timeout" ]
-
-                Http.NetworkError_ ->
-                    Err [ "Connection issues" ]
-
-                Http.BadStatus_ _ body ->
-                    case Json.decodeString errorDecoder body of
-                        Ok errors ->
-                            Err errors
-
-                        Err _ ->
-                            Err [ "Bad status code" ]
-
-                Http.GoodStatus_ _ body ->
-                    case Json.decodeString decoder body of
-                        Ok value ->
-                            Ok value
-
-                        Err err ->
-                            Err [ Json.errorToString err ]
-
-
-errorDecoder : Json.Decoder (List String)
-errorDecoder =
-    Json.keyValuePairs (Json.list Json.string)
-        |> Json.field "errors"
-        |> Json.map (List.concatMap (\( key, values ) -> values |> List.map (\value -> key ++ " " ++ value)))
 
 
 fromResult : Result (List String) value -> Data value

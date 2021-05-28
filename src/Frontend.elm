@@ -10,7 +10,6 @@ import Gen.Pages as Pages
 import Gen.Route as Route
 import Html
 import Html.Attributes as Attr
-import Json.Encode as E
 import Lamdera
 import Request
 import Shared
@@ -44,7 +43,7 @@ init : Url -> Key -> ( Model, Cmd Msg )
 init url key =
     let
         ( shared, sharedCmd ) =
-            Shared.init (Request.create () url key) E.null
+            Shared.init (Request.create () url key) ()
 
         ( page, effect ) =
             Pages.init (Route.fromUrl url) shared url key

@@ -14,7 +14,6 @@ import Components.Footer
 import Components.Navbar
 import Html exposing (..)
 import Html.Attributes exposing (class, href, rel, type_)
-import Json.Decode as Json
 import Request exposing (Request)
 import Utils.Route
 import View exposing (View)
@@ -25,7 +24,7 @@ import View exposing (View)
 
 
 type alias Flags =
-    Json.Value
+    ()
 
 
 type alias Model =

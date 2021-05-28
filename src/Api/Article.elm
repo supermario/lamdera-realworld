@@ -56,20 +56,3 @@ updateArticle article listing =
 itemsPerPage : Int
 itemsPerPage =
     25
-
-
-
--- @TODO re-implement pagination
--- paginatedDecoder : Int -> Json.Decoder Listing
--- paginatedDecoder page =
--- let
---     multipleArticles : List Article -> Int -> Listing
---     multipleArticles articles count =
---         { articles = articles
---         , page = page
---         , totalPages = count // itemsPerPage
---         }
--- in
--- Json.map2 multipleArticles
---     (Json.field "articles" (Json.list decoder))
---     (Json.field "articlesCount" Json.int)
