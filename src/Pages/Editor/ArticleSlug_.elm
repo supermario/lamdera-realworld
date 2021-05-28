@@ -1,8 +1,9 @@
-module Pages.Editor.ArticleSlug_ exposing (Model, Msg, page)
+module Pages.Editor.ArticleSlug_ exposing (Model, Msg(..), page)
 
 import Api.Article exposing (Article)
 import Api.Data exposing (Data)
 import Api.User exposing (User)
+import Bridge exposing (..)
 import Components.Editor exposing (Field, Form)
 import Gen.Params.Editor.ArticleSlug_ exposing (Params)
 import Gen.Route as Route
@@ -42,11 +43,11 @@ init shared { params } =
       , form = Nothing
       , article = Api.Data.Loading
       }
-    , Api.Article.get
-        { token = shared.user |> Maybe.map .token
-        , slug = params.articleSlug
-        , onResponse = LoadedInitialArticle
-        }
+    , sendToBackend <|
+        ArticleGet_Editor__ArticleSlug_
+            { token = shared.user |> Maybe.map .token
+            , slug = params.articleSlug
+            }
     )
 
 
@@ -94,20 +95,20 @@ update req msg model =
 
         SubmittedForm user form ->
             ( model
-            , Api.Article.update
-                { token = user.token
-                , slug = model.slug
-                , article =
-                    { title = form.title
-                    , description = form.description
-                    , body = form.body
-                    , tags =
-                        form.tags
-                            |> String.split ","
-                            |> List.map String.trim
+            , sendToBackend <|
+                ArticleUpdate_Editor__ArticleSlug_
+                    { token = user.token
+                    , slug = model.slug
+                    , article =
+                        { title = form.title
+                        , description = form.description
+                        , body = form.body
+                        , tags =
+                            form.tags
+                                |> String.split ","
+                                |> List.map String.trim
+                        }
                     }
-                , onResponse = UpdatedArticle
-                }
             )
 
         UpdatedArticle article ->

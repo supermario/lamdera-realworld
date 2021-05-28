@@ -9,7 +9,6 @@ import Components.ArticleList
 import Html exposing (..)
 import Html.Attributes exposing (class, classList)
 import Html.Events as Events
-import Lamdera
 import Page exposing (Page)
 import Request exposing (Request)
 import Shared
@@ -65,7 +64,7 @@ init shared =
     ( model
     , Cmd.batch
         [ fetchArticlesForTab shared model
-        , Lamdera.sendToBackend GetTags
+        , sendToBackend GetTags_Home_
         ]
     )
 
@@ -81,29 +80,29 @@ fetchArticlesForTab :
 fetchArticlesForTab shared model =
     case model.activeTab of
         Global ->
-            Api.Article.list
-                { filters = Filters.create
-                , page = model.page
-                , token = Maybe.map .token shared.user
-                , onResponse = GotArticles
-                }
+            sendToBackend <|
+                ArticleList_Home_
+                    { filters = Filters.create
+                    , page = model.page
+                    , token = Maybe.map .token shared.user
+                    }
 
         FeedFor user ->
-            Api.Article.feed
-                { token = user.token
-                , page = model.page
-                , onResponse = GotArticles
-                }
+            sendToBackend <|
+                ArticleFeed_Home_
+                    { token = user.token
+                    , page = model.page
+                    }
 
         TagFilter tag ->
-            Api.Article.list
-                { filters =
-                    Filters.create
-                        |> Filters.withTag tag
-                , page = model.page
-                , token = Maybe.map .token shared.user
-                , onResponse = GotArticles
-                }
+            sendToBackend <|
+                ArticleList_Home_
+                    { filters =
+                        Filters.create
+                            |> Filters.withTag tag
+                    , page = model.page
+                    , token = Maybe.map .token shared.user
+                    }
 
 
 
@@ -153,20 +152,20 @@ update shared msg model =
 
         ClickedFavorite user article ->
             ( model
-            , Api.Article.favorite
-                { token = user.token
-                , slug = article.slug
-                , onResponse = UpdatedArticle
-                }
+            , sendToBackend <|
+                ArticleFavorite_Home_
+                    { token = user.token
+                    , slug = article.slug
+                    }
             )
 
         ClickedUnfavorite user article ->
             ( model
-            , Api.Article.unfavorite
-                { token = user.token
-                , slug = article.slug
-                , onResponse = UpdatedArticle
-                }
+            , sendToBackend <|
+                ArticleUnfavorite_Home_
+                    { token = user.token
+                    , slug = article.slug
+                    }
             )
 
         ClickedPage page_ ->

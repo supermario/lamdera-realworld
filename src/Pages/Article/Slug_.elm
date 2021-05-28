@@ -1,10 +1,11 @@
-module Pages.Article.Slug_ exposing (Model, Msg, page)
+module Pages.Article.Slug_ exposing (Model, Msg(..), page)
 
 import Api.Article exposing (Article)
 import Api.Article.Comment exposing (Comment)
 import Api.Data exposing (Data)
 import Api.Profile exposing (Profile)
 import Api.User exposing (User)
+import Bridge exposing (..)
 import Components.IconButton as IconButton
 import Gen.Params.Article.Slug_ exposing (Params)
 import Gen.Route as Route
@@ -49,11 +50,11 @@ init shared { params } =
       , commentText = ""
       }
     , Cmd.batch
-        [ Api.Article.get
-            { slug = params.slug
-            , token = shared.user |> Maybe.map .token
-            , onResponse = GotArticle
-            }
+        [ sendToBackend <|
+            ArticleGet_Article__Slug_
+                { slug = params.slug
+                , token = shared.user |> Maybe.map .token
+                }
         , Api.Article.Comment.get
             { token = shared.user |> Maybe.map .token
             , articleSlug = params.slug
@@ -94,29 +95,29 @@ update req msg model =
 
         ClickedFavorite user article ->
             ( model
-            , Api.Article.favorite
-                { token = user.token
-                , slug = article.slug
-                , onResponse = GotArticle
-                }
+            , sendToBackend <|
+                ArticleFavorite_Article__Slug_
+                    { token = user.token
+                    , slug = article.slug
+                    }
             )
 
         ClickedUnfavorite user article ->
             ( model
-            , Api.Article.unfavorite
-                { token = user.token
-                , slug = article.slug
-                , onResponse = GotArticle
-                }
+            , sendToBackend <|
+                ArticleUnfavorite_Article__Slug_
+                    { token = user.token
+                    , slug = article.slug
+                    }
             )
 
         ClickedDeleteArticle user article ->
             ( model
-            , Api.Article.delete
-                { token = user.token
-                , slug = article.slug
-                , onResponse = DeletedArticle
-                }
+            , sendToBackend <|
+                ArticleDelete_Article__Slug_
+                    { token = user.token
+                    , slug = article.slug
+                    }
             )
 
         DeletedArticle _ ->

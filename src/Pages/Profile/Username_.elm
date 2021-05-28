@@ -1,4 +1,4 @@
-module Pages.Profile.Username_ exposing (Model, Msg, page)
+module Pages.Profile.Username_ exposing (Model, Msg(..), page)
 
 import Api.Article exposing (Article)
 import Api.Article.Filters as Filters
@@ -6,6 +6,7 @@ import Api.Data exposing (Data)
 import Api.Profile exposing (Profile)
 import Api.Token exposing (Token)
 import Api.User exposing (User)
+import Bridge exposing (..)
 import Components.ArticleList
 import Components.IconButton as IconButton
 import Components.NotFound
@@ -74,23 +75,23 @@ init shared { params } =
 
 fetchArticlesBy : Maybe Token -> String -> Int -> Cmd Msg
 fetchArticlesBy token username page_ =
-    Api.Article.list
-        { token = token
-        , page = page_
-        , filters = Filters.create |> Filters.byAuthor username
-        , onResponse = GotArticles
-        }
+    sendToBackend <|
+        ArticleList_Username_
+            { token = token
+            , page = page_
+            , filters = Filters.create |> Filters.byAuthor username
+            }
 
 
 fetchArticlesFavoritedBy : Maybe Token -> String -> Int -> Cmd Msg
 fetchArticlesFavoritedBy token username page_ =
-    Api.Article.list
-        { token = token
-        , page = page_
-        , filters =
-            Filters.create |> Filters.favoritedBy username
-        , onResponse = GotArticles
-        }
+    sendToBackend <|
+        ArticleList_Username_
+            { token = token
+            , page = page_
+            , filters =
+                Filters.create |> Filters.favoritedBy username
+            }
 
 
 
@@ -160,20 +161,20 @@ update shared msg model =
 
         ClickedFavorite user article ->
             ( model
-            , Api.Article.favorite
-                { token = user.token
-                , slug = article.slug
-                , onResponse = UpdatedArticle
-                }
+            , sendToBackend <|
+                ArticleFavorite_Profile__Username_
+                    { token = user.token
+                    , slug = article.slug
+                    }
             )
 
         ClickedUnfavorite user article ->
             ( model
-            , Api.Article.unfavorite
-                { token = user.token
-                , slug = article.slug
-                , onResponse = UpdatedArticle
-                }
+            , sendToBackend <|
+                ArticleUnfavorite_Profile__Username_
+                    { token = user.token
+                    , slug = article.slug
+                    }
             )
 
         ClickedPage page_ ->

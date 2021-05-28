@@ -1,8 +1,9 @@
-module Pages.Editor exposing (Model, Msg, page)
+module Pages.Editor exposing (Model, Msg(..), page)
 
 import Api.Article exposing (Article)
 import Api.Data exposing (Data)
 import Api.User exposing (User)
+import Bridge exposing (..)
 import Components.Editor exposing (Field, Form)
 import Gen.Route as Route
 import Html exposing (..)
@@ -74,19 +75,19 @@ update req msg model =
 
         SubmittedForm user ->
             ( model
-            , Api.Article.create
-                { token = user.token
-                , article =
-                    { title = model.form.title
-                    , description = model.form.description
-                    , body = model.form.body
-                    , tags =
-                        model.form.tags
-                            |> String.split ","
-                            |> List.map String.trim
+            , sendToBackend <|
+                ArticleCreate_Editor
+                    { token = user.token
+                    , article =
+                        { title = model.form.title
+                        , description = model.form.description
+                        , body = model.form.body
+                        , tags =
+                            model.form.tags
+                                |> String.split ","
+                                |> List.map String.trim
+                        }
                     }
-                , onResponse = GotArticle
-                }
             )
 
         GotArticle article ->
