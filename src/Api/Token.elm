@@ -2,6 +2,7 @@ module Api.Token exposing
     ( Token
     , decoder, encode
     , get, put, post, delete
+    , stub
     )
 
 {-|
@@ -19,6 +20,10 @@ import Json.Encode as Encode
 
 type Token
     = Token String
+
+
+stub =
+    Token "abc123"
 
 
 decoder : Json.Decoder Token

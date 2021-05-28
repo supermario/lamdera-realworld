@@ -42,4 +42,16 @@ type ToBackend
     | ProfileUnfollow_Profile__Username_ { token : Token, username : String }
     | ProfileFollow_Article__Slug_ { token : Token, username : String }
     | ProfileUnfollow_Article__Slug_ { token : Token, username : String }
+    | UserAuthentication_Login { user : { email : String, password : String } }
+    | UserRegistration_Register { user : { username : String, email : String, password : String } }
+    | UserUpdate_Settings
+        { token : Token
+        , user :
+            { username : String
+            , email : String
+            , password : Maybe String
+            , image : String
+            , bio : String
+            }
+        }
     | NoOpToBackend

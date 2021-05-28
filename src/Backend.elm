@@ -9,7 +9,10 @@ import Pages.Article.Slug_
 import Pages.Editor
 import Pages.Editor.ArticleSlug_
 import Pages.Home_
+import Pages.Login
 import Pages.Profile.Username_
+import Pages.Register
+import Pages.Settings
 import Stubs exposing (..)
 import Types exposing (BackendModel, BackendMsg(..), FrontendModel, FrontendMsg(..), ToFrontend(..))
 
@@ -112,6 +115,15 @@ updateFromFrontend sessionId clientId msg model =
 
         ProfileUnfollow_Article__Slug_ { token, username } ->
             ( model, sendToFrontend clientId (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.GotAuthor (Success stubProfile)))) )
+
+        UserAuthentication_Login { user } ->
+            ( model, sendToFrontend clientId (PageMsg (Gen.Msg.Login (Pages.Login.GotUser (Success stubUser)))) )
+
+        UserRegistration_Register { user } ->
+            ( model, sendToFrontend clientId (PageMsg (Gen.Msg.Register (Pages.Register.GotUser (Success stubUser)))) )
+
+        UserUpdate_Settings { token, user } ->
+            ( model, sendToFrontend clientId (PageMsg (Gen.Msg.Settings (Pages.Settings.GotUser (Success stubUser)))) )
 
         NoOpToBackend ->
             ( model, Cmd.none )

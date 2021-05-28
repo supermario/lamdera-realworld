@@ -1,7 +1,8 @@
-module Pages.Settings exposing (Model, Msg, page)
+module Pages.Settings exposing (Model, Msg(..), page)
 
 import Api.Data exposing (Data)
 import Api.User exposing (User)
+import Bridge exposing (..)
 import Components.ErrorList
 import Effect exposing (Effect)
 import Html exposing (..)
@@ -106,11 +107,16 @@ update msg model =
 
         SubmittedForm user ->
             ( { model | message = Nothing, errors = [] }
-            , Effect.fromCmd <|
-                Api.User.update
+            , (Effect.fromCmd << sendToBackend) <|
+                UserUpdate_Settings
                     { token = user.token
-                    , user = model
-                    , onResponse = GotUser
+                    , user =
+                        { username = model.username
+                        , email = model.email
+                        , password = model.password
+                        , image = model.image
+                        , bio = model.bio
+                        }
                     }
             )
 

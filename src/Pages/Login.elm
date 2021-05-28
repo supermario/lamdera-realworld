@@ -1,7 +1,8 @@
-module Pages.Login exposing (Model, Msg, page)
+module Pages.Login exposing (Model, Msg(..), page)
 
 import Api.Data exposing (Data)
 import Api.User exposing (User)
+import Bridge exposing (..)
 import Components.UserForm
 import Effect exposing (Effect)
 import Gen.Route as Route
@@ -80,13 +81,12 @@ update req msg model =
 
         AttemptedSignIn ->
             ( model
-            , Effect.fromCmd <|
-                Api.User.authentication
+            , (Effect.fromCmd << sendToBackend) <|
+                UserAuthentication_Login
                     { user =
                         { email = model.email
                         , password = model.password
                         }
-                    , onResponse = GotUser
                     }
             )
 
