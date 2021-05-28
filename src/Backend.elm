@@ -98,5 +98,20 @@ updateFromFrontend sessionId clientId msg model =
         ArticleCommentDelete_Article__Slug_ { token, articleSlug, commentId } ->
             ( model, sendToFrontend clientId (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.DeletedComment (Success commentId)))) )
 
+        ProfileGet_Profile__Username_ { token, username } ->
+            ( model, sendToFrontend clientId (PageMsg (Gen.Msg.Profile__Username_ (Pages.Profile.Username_.GotProfile (Success stubProfile)))) )
+
+        ProfileFollow_Profile__Username_ { token, username } ->
+            ( model, sendToFrontend clientId (PageMsg (Gen.Msg.Profile__Username_ (Pages.Profile.Username_.GotProfile (Success stubProfile)))) )
+
+        ProfileUnfollow_Profile__Username_ { token, username } ->
+            ( model, sendToFrontend clientId (PageMsg (Gen.Msg.Profile__Username_ (Pages.Profile.Username_.GotProfile (Success stubProfile)))) )
+
+        ProfileFollow_Article__Slug_ { token, username } ->
+            ( model, sendToFrontend clientId (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.GotAuthor (Success stubProfile)))) )
+
+        ProfileUnfollow_Article__Slug_ { token, username } ->
+            ( model, sendToFrontend clientId (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.GotAuthor (Success stubProfile)))) )
+
         NoOpToBackend ->
             ( model, Cmd.none )

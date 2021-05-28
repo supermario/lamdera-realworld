@@ -37,4 +37,9 @@ type ToBackend
     | ArticleCommentGet_Article__Slug_ { token : Maybe Token, articleSlug : String }
     | ArticleCommentCreate_Article__Slug_ { token : Token, articleSlug : String, comment : { body : String } }
     | ArticleCommentDelete_Article__Slug_ { token : Token, articleSlug : String, commentId : Int }
+    | ProfileGet_Profile__Username_ { token : Maybe Token, username : String }
+    | ProfileFollow_Profile__Username_ { token : Token, username : String }
+    | ProfileUnfollow_Profile__Username_ { token : Token, username : String }
+    | ProfileFollow_Article__Slug_ { token : Token, username : String }
+    | ProfileUnfollow_Article__Slug_ { token : Token, username : String }
     | NoOpToBackend

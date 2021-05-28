@@ -142,20 +142,20 @@ update req msg model =
 
         ClickedFollow user profile ->
             ( model
-            , Api.Profile.follow
+            , ProfileFollow_Article__Slug_
                 { token = user.token
                 , username = profile.username
-                , onResponse = GotAuthor
                 }
+                |> sendToBackend
             )
 
         ClickedUnfollow user profile ->
             ( model
-            , Api.Profile.unfollow
+            , ProfileUnfollow_Article__Slug_
                 { token = user.token
                 , username = profile.username
-                , onResponse = GotAuthor
                 }
+                |> sendToBackend
             )
 
         GotComments comments ->

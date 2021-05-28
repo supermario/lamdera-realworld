@@ -63,11 +63,11 @@ init shared { params } =
       , page = 1
       }
     , Cmd.batch
-        [ Api.Profile.get
+        [ ProfileGet_Profile__Username_
             { token = token
             , username = params.username
-            , onResponse = GotProfile
             }
+            |> sendToBackend
         , fetchArticlesBy token params.username 1
         ]
     )
@@ -120,20 +120,20 @@ update shared msg model =
 
         ClickedFollow user profile ->
             ( model
-            , Api.Profile.follow
+            , ProfileFollow_Profile__Username_
                 { token = user.token
                 , username = profile.username
-                , onResponse = GotProfile
                 }
+                |> sendToBackend
             )
 
         ClickedUnfollow user profile ->
             ( model
-            , Api.Profile.unfollow
+            , ProfileUnfollow_Profile__Username_
                 { token = user.token
                 , username = profile.username
-                , onResponse = GotProfile
                 }
+                |> sendToBackend
             )
 
         GotArticles listing ->
