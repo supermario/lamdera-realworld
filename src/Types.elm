@@ -1,13 +1,13 @@
 module Types exposing (..)
 
 import Api.Data exposing (..)
-import Api.User as User
+import Api.User exposing (Email, User, UserFull)
 import Bridge
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Dict exposing (Dict)
 import Gen.Pages as Pages
-import Lamdera exposing (SessionId)
+import Lamdera exposing (ClientId, SessionId)
 import Shared
 import Time
 import Url exposing (Url)
@@ -23,6 +23,7 @@ type alias FrontendModel =
 
 type alias BackendModel =
     { sessions : Dict SessionId Session
+    , users : Dict Email UserFull
     }
 
 
@@ -43,9 +44,12 @@ type alias ToBackend =
 
 
 type BackendMsg
-    = NoOpBackendMsg
+    = CheckSession SessionId ClientId
+    | RenewSession Email SessionId ClientId Time.Posix
+    | NoOpBackendMsg
 
 
 type ToFrontend
-    = PageMsg Pages.Msg
+    = ActiveSession User
+    | PageMsg Pages.Msg
     | NoOpToFrontend

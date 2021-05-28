@@ -1,15 +1,37 @@
-module Api.User exposing (User)
+module Api.User exposing (..)
 
 {-|
 
-@docs User
+@docs User, UserFull, Email
 
 -}
 
 
 type alias User =
-    { email : String
+    { email : Email
     , username : String
     , bio : Maybe String
     , image : String
     }
+
+
+type alias UserFull =
+    { email : Email
+    , username : String
+    , bio : Maybe String
+    , image : String
+    , password : String
+    }
+
+
+toUser : UserFull -> User
+toUser u =
+    { email = u.email
+    , username = u.username
+    , bio = u.bio
+    , image = u.image
+    }
+
+
+type alias Email =
+    String

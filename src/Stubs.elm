@@ -3,7 +3,7 @@ module Stubs exposing (..)
 import Api.Article exposing (Article, Listing)
 import Api.Article.Comment exposing (Comment)
 import Api.Profile exposing (Profile)
-import Api.User exposing (User)
+import Api.User exposing (..)
 import Time
 
 
@@ -60,6 +60,16 @@ stubUser =
     , username = "test@test.com"
     , bio = Just "test bio"
     , image = "https://static.productionready.io/images/smiley-cyrus.jpg"
+    }
+
+
+stubUserFull : UserFull
+stubUserFull =
+    { email = "test@test.com"
+    , username = "test@test.com"
+    , bio = Just "test bio"
+    , image = "https://static.productionready.io/images/smiley-cyrus.jpg"
+    , password = "test"
     }
 
 

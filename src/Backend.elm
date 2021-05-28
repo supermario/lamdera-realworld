@@ -1,6 +1,7 @@
 module Backend exposing (..)
 
 import Api.Data exposing (Data(..))
+import Api.User
 import Bridge exposing (..)
 import Dict
 import Gen.Msg
@@ -15,6 +16,9 @@ import Pages.Profile.Username_
 import Pages.Register
 import Pages.Settings
 import Stubs exposing (..)
+import Task
+import Time
+import Time.Extra as Time
 import Types exposing (BackendModel, BackendMsg(..), FrontendModel, FrontendMsg(..), ToFrontend(..))
 
 
@@ -27,13 +31,13 @@ app =
         { init = init
         , update = update
         , updateFromFrontend = updateFromFrontend
-        , subscriptions = \m -> Sub.none
+        , subscriptions = \m -> onConnect CheckSession
         }
 
 
 init : ( Model, Cmd BackendMsg )
 init =
-    ( { sessions = Dict.empty }
+    ( { sessions = Dict.empty, users = Dict.fromList [ ( stubUserFull.email, stubUserFull ) ] }
     , Cmd.none
     )
 
@@ -41,8 +45,26 @@ init =
 update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
 update msg model =
     case msg of
+        CheckSession sid cid ->
+            model.sessions
+                |> Dict.get sid
+                |> Maybe.andThen
+                    (\session -> model.users |> Dict.get session.email)
+                |> Maybe.map
+                    (\user ->
+                        ( model, sendToFrontend cid (ActiveSession (Api.User.toUser user)) )
+                    )
+                |> Maybe.withDefault ( model, Cmd.none )
+
+        RenewSession email sid cid now ->
+            ( { model | sessions = model.sessions |> Dict.update sid (always (Just { email = email, expires = now |> Time.add Time.Day 30 Time.utc })) }, Cmd.none )
+
         NoOpBackendMsg ->
             ( model, Cmd.none )
+
+
+renewSession email sid cid =
+    Time.now |> Task.perform (RenewSession email sid cid)
 
 
 updateFromFrontend : SessionId -> ClientId -> ToBackend -> Model -> ( Model, Cmd BackendMsg )
@@ -121,7 +143,21 @@ updateFromFrontend sessionId clientId msg model =
             ( model, sendToFrontend clientId (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.GotAuthor (Success stubProfile)))) )
 
         UserAuthentication_Login { user } ->
-            ( model, sendToFrontend clientId (PageMsg (Gen.Msg.Login (Pages.Login.GotUser (Success stubUser)))) )
+            let
+                ( response, cmd ) =
+                    model.users
+                        |> Dict.get user.email
+                        |> Maybe.map
+                            (\u ->
+                                if u.password == user.password then
+                                    ( Success (Api.User.toUser u), renewSession user.email sessionId clientId )
+
+                                else
+                                    ( Failure [ "email or password is invalid" ], Cmd.none )
+                            )
+                        |> Maybe.withDefault ( Failure [ "email or password is invalid" ], Cmd.none )
+            in
+            ( model, Cmd.batch [ sendToFrontend clientId (PageMsg (Gen.Msg.Login (Pages.Login.GotUser response))), cmd ] )
 
         UserRegistration_Register { user } ->
             ( model, sendToFrontend clientId (PageMsg (Gen.Msg.Register (Pages.Register.GotUser (Success stubUser)))) )
