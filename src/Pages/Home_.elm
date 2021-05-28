@@ -80,29 +80,29 @@ fetchArticlesForTab :
 fetchArticlesForTab shared model =
     case model.activeTab of
         Global ->
-            sendToBackend <|
-                ArticleList_Home_
-                    { filters = Filters.create
-                    , page = model.page
-                    , token = Maybe.map .token shared.user
-                    }
+            ArticleList_Home_
+                { filters = Filters.create
+                , page = model.page
+                , token = Maybe.map .token shared.user
+                }
+                |> sendToBackend
 
         FeedFor user ->
-            sendToBackend <|
-                ArticleFeed_Home_
-                    { token = user.token
-                    , page = model.page
-                    }
+            ArticleFeed_Home_
+                { token = user.token
+                , page = model.page
+                }
+                |> sendToBackend
 
         TagFilter tag ->
-            sendToBackend <|
-                ArticleList_Home_
-                    { filters =
-                        Filters.create
-                            |> Filters.withTag tag
-                    , page = model.page
-                    , token = Maybe.map .token shared.user
-                    }
+            ArticleList_Home_
+                { filters =
+                    Filters.create
+                        |> Filters.withTag tag
+                , page = model.page
+                , token = Maybe.map .token shared.user
+                }
+                |> sendToBackend
 
 
 
@@ -152,20 +152,20 @@ update shared msg model =
 
         ClickedFavorite user article ->
             ( model
-            , sendToBackend <|
-                ArticleFavorite_Home_
-                    { token = user.token
-                    , slug = article.slug
-                    }
+            , ArticleFavorite_Home_
+                { token = user.token
+                , slug = article.slug
+                }
+                |> sendToBackend
             )
 
         ClickedUnfavorite user article ->
             ( model
-            , sendToBackend <|
-                ArticleUnfavorite_Home_
-                    { token = user.token
-                    , slug = article.slug
-                    }
+            , ArticleUnfavorite_Home_
+                { token = user.token
+                , slug = article.slug
+                }
+                |> sendToBackend
             )
 
         ClickedPage page_ ->

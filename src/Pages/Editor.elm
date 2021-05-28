@@ -75,19 +75,19 @@ update req msg model =
 
         SubmittedForm user ->
             ( model
-            , sendToBackend <|
-                ArticleCreate_Editor
-                    { token = user.token
-                    , article =
-                        { title = model.form.title
-                        , description = model.form.description
-                        , body = model.form.body
-                        , tags =
-                            model.form.tags
-                                |> String.split ","
-                                |> List.map String.trim
-                        }
+            , ArticleCreate_Editor
+                { token = user.token
+                , article =
+                    { title = model.form.title
+                    , description = model.form.description
+                    , body = model.form.body
+                    , tags =
+                        model.form.tags
+                            |> String.split ","
+                            |> List.map String.trim
                     }
+                }
+                |> sendToBackend
             )
 
         GotArticle article ->

@@ -43,11 +43,11 @@ init shared { params } =
       , form = Nothing
       , article = Api.Data.Loading
       }
-    , sendToBackend <|
-        ArticleGet_Editor__ArticleSlug_
-            { token = shared.user |> Maybe.map .token
-            , slug = params.articleSlug
-            }
+    , ArticleGet_Editor__ArticleSlug_
+        { token = shared.user |> Maybe.map .token
+        , slug = params.articleSlug
+        }
+        |> sendToBackend
     )
 
 
@@ -95,20 +95,20 @@ update req msg model =
 
         SubmittedForm user form ->
             ( model
-            , sendToBackend <|
-                ArticleUpdate_Editor__ArticleSlug_
-                    { token = user.token
-                    , slug = model.slug
-                    , article =
-                        { title = form.title
-                        , description = form.description
-                        , body = form.body
-                        , tags =
-                            form.tags
-                                |> String.split ","
-                                |> List.map String.trim
-                        }
+            , ArticleUpdate_Editor__ArticleSlug_
+                { token = user.token
+                , slug = model.slug
+                , article =
+                    { title = form.title
+                    , description = form.description
+                    , body = form.body
+                    , tags =
+                        form.tags
+                            |> String.split ","
+                            |> List.map String.trim
                     }
+                }
+                |> sendToBackend
             )
 
         UpdatedArticle article ->

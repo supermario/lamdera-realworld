@@ -75,23 +75,23 @@ init shared { params } =
 
 fetchArticlesBy : Maybe Token -> String -> Int -> Cmd Msg
 fetchArticlesBy token username page_ =
-    sendToBackend <|
-        ArticleList_Username_
-            { token = token
-            , page = page_
-            , filters = Filters.create |> Filters.byAuthor username
-            }
+    ArticleList_Username_
+        { token = token
+        , page = page_
+        , filters = Filters.create |> Filters.byAuthor username
+        }
+        |> sendToBackend
 
 
 fetchArticlesFavoritedBy : Maybe Token -> String -> Int -> Cmd Msg
 fetchArticlesFavoritedBy token username page_ =
-    sendToBackend <|
-        ArticleList_Username_
-            { token = token
-            , page = page_
-            , filters =
-                Filters.create |> Filters.favoritedBy username
-            }
+    ArticleList_Username_
+        { token = token
+        , page = page_
+        , filters =
+            Filters.create |> Filters.favoritedBy username
+        }
+        |> sendToBackend
 
 
 
@@ -161,20 +161,20 @@ update shared msg model =
 
         ClickedFavorite user article ->
             ( model
-            , sendToBackend <|
-                ArticleFavorite_Profile__Username_
-                    { token = user.token
-                    , slug = article.slug
-                    }
+            , ArticleFavorite_Profile__Username_
+                { token = user.token
+                , slug = article.slug
+                }
+                |> sendToBackend
             )
 
         ClickedUnfavorite user article ->
             ( model
-            , sendToBackend <|
-                ArticleUnfavorite_Profile__Username_
-                    { token = user.token
-                    , slug = article.slug
-                    }
+            , ArticleUnfavorite_Profile__Username_
+                { token = user.token
+                , slug = article.slug
+                }
+                |> sendToBackend
             )
 
         ClickedPage page_ ->
