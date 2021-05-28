@@ -89,5 +89,14 @@ updateFromFrontend sessionId clientId msg model =
         ArticleUnfavorite_Article__Slug_ { token, slug } ->
             ( model, sendToFrontend clientId (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.GotArticle (Success stubArticle)))) )
 
+        ArticleCommentGet_Article__Slug_ { token, articleSlug } ->
+            ( model, sendToFrontend clientId (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.GotComments (Success stubComments)))) )
+
+        ArticleCommentCreate_Article__Slug_ { token, articleSlug, comment } ->
+            ( model, sendToFrontend clientId (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.CreatedComment (Success stubComment)))) )
+
+        ArticleCommentDelete_Article__Slug_ { token, articleSlug, commentId } ->
+            ( model, sendToFrontend clientId (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.DeletedComment (Success commentId)))) )
+
         NoOpToBackend ->
             ( model, Cmd.none )

@@ -55,11 +55,11 @@ init shared { params } =
                 { slug = params.slug
                 , token = shared.user |> Maybe.map .token
                 }
-        , Api.Article.Comment.get
-            { token = shared.user |> Maybe.map .token
-            , articleSlug = params.slug
-            , onResponse = GotComments
-            }
+        , sendToBackend <|
+            ArticleCommentGet_Article__Slug_
+                { token = shared.user |> Maybe.map .token
+                , articleSlug = params.slug
+                }
         ]
     )
 
@@ -174,12 +174,12 @@ update req msg model =
 
             else
                 ( { model | commentText = "" }
-                , Api.Article.Comment.create
-                    { token = user.token
-                    , articleSlug = article.slug
-                    , comment = { body = model.commentText }
-                    , onResponse = CreatedComment
-                    }
+                , sendToBackend <|
+                    ArticleCommentCreate_Article__Slug_
+                        { token = user.token
+                        , articleSlug = article.slug
+                        , comment = { body = model.commentText }
+                        }
                 )
 
         CreatedComment comment ->
@@ -194,12 +194,12 @@ update req msg model =
 
         ClickedDeleteComment user article comment ->
             ( model
-            , Api.Article.Comment.delete
-                { token = user.token
-                , articleSlug = article.slug
-                , commentId = comment.id
-                , onResponse = DeletedComment
-                }
+            , sendToBackend <|
+                ArticleCommentDelete_Article__Slug_
+                    { token = user.token
+                    , articleSlug = article.slug
+                    , commentId = comment.id
+                    }
             )
 
         DeletedComment id ->

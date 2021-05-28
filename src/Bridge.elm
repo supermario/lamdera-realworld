@@ -34,4 +34,7 @@ type ToBackend
     | ArticleUnfavorite_Home_ { token : Token, slug : String }
     | ArticleFavorite_Article__Slug_ { token : Token, slug : String }
     | ArticleUnfavorite_Article__Slug_ { token : Token, slug : String }
+    | ArticleCommentGet_Article__Slug_ { token : Maybe Token, articleSlug : String }
+    | ArticleCommentCreate_Article__Slug_ { token : Token, articleSlug : String, comment : { body : String } }
+    | ArticleCommentDelete_Article__Slug_ { token : Token, articleSlug : String, commentId : Int }
     | NoOpToBackend

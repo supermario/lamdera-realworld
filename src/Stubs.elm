@@ -1,6 +1,7 @@
 module Stubs exposing (..)
 
 import Api.Article exposing (Article, Listing)
+import Api.Article.Comment exposing (Comment)
 import Api.Profile exposing (Profile)
 import Time
 
@@ -50,3 +51,17 @@ stubProfile =
     , image = "https://static.productionready.io/images/smiley-cyrus.jpg"
     , following = False
     }
+
+
+stubComment : Comment
+stubComment =
+    { id = 0
+    , createdAt = Time.millisToPosix 0
+    , updatedAt = Time.millisToPosix 0
+    , body = "test comment"
+    , author = stubProfile
+    }
+
+
+stubComments =
+    [ stubComment ]
