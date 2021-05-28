@@ -52,12 +52,10 @@ init shared { params } =
     , Cmd.batch
         [ ArticleGet_Article__Slug_
             { slug = params.slug
-            , token = shared.user |> Maybe.map .token
             }
             |> sendToBackend
         , ArticleCommentGet_Article__Slug_
-            { token = shared.user |> Maybe.map .token
-            , articleSlug = params.slug
+            { articleSlug = params.slug
             }
             |> sendToBackend
         ]
@@ -96,8 +94,7 @@ update req msg model =
         ClickedFavorite user article ->
             ( model
             , ArticleFavorite_Article__Slug_
-                { token = user.token
-                , slug = article.slug
+                { slug = article.slug
                 }
                 |> sendToBackend
             )
@@ -105,8 +102,7 @@ update req msg model =
         ClickedUnfavorite user article ->
             ( model
             , ArticleUnfavorite_Article__Slug_
-                { token = user.token
-                , slug = article.slug
+                { slug = article.slug
                 }
                 |> sendToBackend
             )
@@ -114,8 +110,7 @@ update req msg model =
         ClickedDeleteArticle user article ->
             ( model
             , ArticleDelete_Article__Slug_
-                { token = user.token
-                , slug = article.slug
+                { slug = article.slug
                 }
                 |> sendToBackend
             )
@@ -143,8 +138,7 @@ update req msg model =
         ClickedFollow user profile ->
             ( model
             , ProfileFollow_Article__Slug_
-                { token = user.token
-                , username = profile.username
+                { username = profile.username
                 }
                 |> sendToBackend
             )
@@ -152,8 +146,7 @@ update req msg model =
         ClickedUnfollow user profile ->
             ( model
             , ProfileUnfollow_Article__Slug_
-                { token = user.token
-                , username = profile.username
+                { username = profile.username
                 }
                 |> sendToBackend
             )
@@ -175,8 +168,7 @@ update req msg model =
             else
                 ( { model | commentText = "" }
                 , ArticleCommentCreate_Article__Slug_
-                    { token = user.token
-                    , articleSlug = article.slug
+                    { articleSlug = article.slug
                     , comment = { body = model.commentText }
                     }
                     |> sendToBackend
@@ -195,8 +187,7 @@ update req msg model =
         ClickedDeleteComment user article comment ->
             ( model
             , ArticleCommentDelete_Article__Slug_
-                { token = user.token
-                , articleSlug = article.slug
+                { articleSlug = article.slug
                 , commentId = comment.id
                 }
                 |> sendToBackend

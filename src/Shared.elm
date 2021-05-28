@@ -9,12 +9,12 @@ module Shared exposing
     )
 
 import Api.User exposing (User)
+import Bridge exposing (..)
 import Components.Footer
 import Components.Navbar
 import Html exposing (..)
 import Html.Attributes exposing (class, href, rel, type_)
 import Json.Decode as Json
-import Ports
 import Request exposing (Request)
 import Utils.Route
 import View exposing (View)
@@ -35,13 +35,7 @@ type alias Model =
 
 init : Request -> Flags -> ( Model, Cmd Msg )
 init _ json =
-    let
-        user =
-            json
-                |> Json.decodeValue (Json.field "user" Api.User.decoder)
-                |> Result.toMaybe
-    in
-    ( Model user
+    ( Model Nothing
     , Cmd.none
     )
 
@@ -60,12 +54,12 @@ update _ msg model =
     case msg of
         SignedInUser user ->
             ( { model | user = Just user }
-            , Ports.saveUser user
+            , Cmd.none
             )
 
         ClickedSignOut ->
             ( { model | user = Nothing }
-            , Ports.clearUser
+            , model.user |> Maybe.map (\user -> sendToBackend (SignedOut user)) |> Maybe.withDefault Cmd.none
             )
 
 

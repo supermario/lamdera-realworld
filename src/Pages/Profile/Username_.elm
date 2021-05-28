@@ -4,7 +4,6 @@ import Api.Article exposing (Article)
 import Api.Article.Filters as Filters
 import Api.Data exposing (Data)
 import Api.Profile exposing (Profile)
-import Api.Token exposing (Token)
 import Api.User exposing (User)
 import Bridge exposing (..)
 import Components.ArticleList
@@ -51,11 +50,6 @@ type Tab
 
 init : Shared.Model -> Request.With Params -> ( Model, Cmd Msg )
 init shared { params } =
-    let
-        token : Maybe Token
-        token =
-            Maybe.map .token shared.user
-    in
     ( { username = params.username
       , profile = Api.Data.Loading
       , listing = Api.Data.Loading
@@ -64,30 +58,27 @@ init shared { params } =
       }
     , Cmd.batch
         [ ProfileGet_Profile__Username_
-            { token = token
-            , username = params.username
+            { username = params.username
             }
             |> sendToBackend
-        , fetchArticlesBy token params.username 1
+        , fetchArticlesBy params.username 1
         ]
     )
 
 
-fetchArticlesBy : Maybe Token -> String -> Int -> Cmd Msg
-fetchArticlesBy token username page_ =
+fetchArticlesBy : String -> Int -> Cmd Msg
+fetchArticlesBy username page_ =
     ArticleList_Username_
-        { token = token
-        , page = page_
+        { page = page_
         , filters = Filters.create |> Filters.byAuthor username
         }
         |> sendToBackend
 
 
-fetchArticlesFavoritedBy : Maybe Token -> String -> Int -> Cmd Msg
-fetchArticlesFavoritedBy token username page_ =
+fetchArticlesFavoritedBy : String -> Int -> Cmd Msg
+fetchArticlesFavoritedBy username page_ =
     ArticleList_Username_
-        { token = token
-        , page = page_
+        { page = page_
         , filters =
             Filters.create |> Filters.favoritedBy username
         }
@@ -121,8 +112,7 @@ update shared msg model =
         ClickedFollow user profile ->
             ( model
             , ProfileFollow_Profile__Username_
-                { token = user.token
-                , username = profile.username
+                { username = profile.username
                 }
                 |> sendToBackend
             )
@@ -130,8 +120,7 @@ update shared msg model =
         ClickedUnfollow user profile ->
             ( model
             , ProfileUnfollow_Profile__Username_
-                { token = user.token
-                , username = profile.username
+                { username = profile.username
                 }
                 |> sendToBackend
             )
@@ -147,7 +136,7 @@ update shared msg model =
                 , listing = Api.Data.Loading
                 , page = 1
               }
-            , fetchArticlesBy (Maybe.map .token shared.user) model.username 1
+            , fetchArticlesBy model.username 1
             )
 
         Clicked FavoritedArticles ->
@@ -156,14 +145,13 @@ update shared msg model =
                 , listing = Api.Data.Loading
                 , page = 1
               }
-            , fetchArticlesFavoritedBy (Maybe.map .token shared.user) model.username 1
+            , fetchArticlesFavoritedBy model.username 1
             )
 
         ClickedFavorite user article ->
             ( model
             , ArticleFavorite_Profile__Username_
-                { token = user.token
-                , slug = article.slug
+                { slug = article.slug
                 }
                 |> sendToBackend
             )
@@ -171,15 +159,14 @@ update shared msg model =
         ClickedUnfavorite user article ->
             ( model
             , ArticleUnfavorite_Profile__Username_
-                { token = user.token
-                , slug = article.slug
+                { slug = article.slug
                 }
                 |> sendToBackend
             )
 
         ClickedPage page_ ->
             let
-                fetch : Maybe Token -> String -> Int -> Cmd Msg
+                fetch : String -> Int -> Cmd Msg
                 fetch =
                     case model.selectedTab of
                         MyArticles ->
@@ -193,7 +180,6 @@ update shared msg model =
                 , page = page_
               }
             , fetch
-                (shared.user |> Maybe.map .token)
                 model.username
                 page_
             )

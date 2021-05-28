@@ -64,7 +64,7 @@ init shared =
     ( model
     , Cmd.batch
         [ fetchArticlesForTab shared model
-        , sendToBackend GetTags_Home_
+        , GetTags_Home_ |> sendToBackend
         ]
     )
 
@@ -83,24 +83,19 @@ fetchArticlesForTab shared model =
             ArticleList_Home_
                 { filters = Filters.create
                 , page = model.page
-                , token = Maybe.map .token shared.user
                 }
                 |> sendToBackend
 
         FeedFor user ->
             ArticleFeed_Home_
-                { token = user.token
-                , page = model.page
+                { page = model.page
                 }
                 |> sendToBackend
 
         TagFilter tag ->
             ArticleList_Home_
-                { filters =
-                    Filters.create
-                        |> Filters.withTag tag
+                { filters = Filters.create |> Filters.withTag tag
                 , page = model.page
-                , token = Maybe.map .token shared.user
                 }
                 |> sendToBackend
 
@@ -153,8 +148,7 @@ update shared msg model =
         ClickedFavorite user article ->
             ( model
             , ArticleFavorite_Home_
-                { token = user.token
-                , slug = article.slug
+                { slug = article.slug
                 }
                 |> sendToBackend
             )
@@ -162,8 +156,7 @@ update shared msg model =
         ClickedUnfavorite user article ->
             ( model
             , ArticleUnfavorite_Home_
-                { token = user.token
-                , slug = article.slug
+                { slug = article.slug
                 }
                 |> sendToBackend
             )

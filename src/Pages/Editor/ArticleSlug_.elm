@@ -44,8 +44,7 @@ init shared { params } =
       , article = Api.Data.Loading
       }
     , ArticleGet_Editor__ArticleSlug_
-        { token = shared.user |> Maybe.map .token
-        , slug = params.articleSlug
+        { slug = params.articleSlug
         }
         |> sendToBackend
     )
@@ -96,8 +95,7 @@ update req msg model =
         SubmittedForm user form ->
             ( model
             , ArticleUpdate_Editor__ArticleSlug_
-                { token = user.token
-                , slug = model.slug
+                { slug = model.slug
                 , article =
                     { title = form.title
                     , description = form.description

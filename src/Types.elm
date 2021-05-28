@@ -1,11 +1,15 @@
 module Types exposing (..)
 
 import Api.Data exposing (..)
+import Api.User as User
 import Bridge
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
+import Dict exposing (Dict)
 import Gen.Pages as Pages
+import Lamdera exposing (SessionId)
 import Shared
+import Time
 import Url exposing (Url)
 
 
@@ -18,8 +22,12 @@ type alias FrontendModel =
 
 
 type alias BackendModel =
-    { message : String
+    { sessions : Dict SessionId Session
     }
+
+
+type alias Session =
+    { email : String, expires : Time.Posix }
 
 
 type FrontendMsg

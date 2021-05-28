@@ -76,8 +76,7 @@ update req msg model =
         SubmittedForm user ->
             ( model
             , ArticleCreate_Editor
-                { token = user.token
-                , article =
+                { article =
                     { title = model.form.title
                     , description = model.form.description
                     , body = model.form.body

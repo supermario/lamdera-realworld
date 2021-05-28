@@ -9,7 +9,6 @@ import Html exposing (..)
 import Html.Attributes exposing (attribute, class, placeholder, type_, value)
 import Html.Events as Events
 import Page exposing (Page)
-import Ports
 import Request exposing (Request)
 import Shared
 import Utils.Maybe
@@ -109,8 +108,7 @@ update msg model =
             ( { model | message = Nothing, errors = [] }
             , (Effect.fromCmd << sendToBackend) <|
                 UserUpdate_Settings
-                    { token = user.token
-                    , user =
+                    { user =
                         { username = model.username
                         , email = model.email
                         , password = model.password
@@ -122,10 +120,7 @@ update msg model =
 
         GotUser (Api.Data.Success user) ->
             ( { model | message = Just "User updated!" }
-            , Effect.batch
-                [ Effect.fromCmd (Ports.saveUser user)
-                , Effect.fromShared (Shared.SignedInUser user)
-                ]
+            , Effect.fromShared (Shared.SignedInUser user)
             )
 
         GotUser (Api.Data.Failure reasons) ->
