@@ -24,6 +24,7 @@ type alias UserFull =
     , image : String
     , password : String
     , favorites : List String -- Slugs
+    , following : List Email
     }
 
 

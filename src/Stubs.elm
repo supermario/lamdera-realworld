@@ -105,7 +105,27 @@ stubUserFull =
     , image = "https://static.productionready.io/images/smiley-cyrus.jpg"
     , password = "test"
     , favorites = []
+    , following = []
     }
+
+
+stubUserFull2 : UserFull
+stubUserFull2 =
+    { email = "bob@bob.com"
+    , username = "bob@bob.com"
+    , bio = Just "just bob"
+    , image = "https://static.productionready.io/images/smiley-cyrus.jpg"
+    , password = "bob"
+    , favorites = []
+    , following = []
+    }
+
+
+stubUsersFull : List UserFull
+stubUsersFull =
+    [ stubUserFull
+    , stubUserFull2
+    ]
 
 
 stubComment : Comment

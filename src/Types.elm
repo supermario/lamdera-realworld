@@ -10,7 +10,6 @@ import Browser.Navigation exposing (Key)
 import Dict exposing (Dict)
 import Gen.Pages as Pages
 import Lamdera exposing (ClientId, SessionId)
-import SerialDict exposing (SerialDict)
 import Shared
 import Time
 import Url exposing (Url)

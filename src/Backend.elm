@@ -3,7 +3,8 @@ module Backend exposing (..)
 import Api.Article exposing (Article, Slug)
 import Api.Article.Filters as Filters exposing (Filters(..))
 import Api.Data exposing (Data(..))
-import Api.User exposing (User, UserFull)
+import Api.Profile exposing (Profile)
+import Api.User exposing (Email, User, UserFull)
 import Bridge exposing (..)
 import Dict
 import Gen.Msg
@@ -46,7 +47,7 @@ init =
                 |> Dict.fromList
     in
     ( { sessions = Dict.empty
-      , users = Dict.fromList [ ( stubUserFull.email, stubUserFull ) ]
+      , users = stubUsersFull |> List.map (\u -> ( u.email, u )) |> Dict.fromList
       , articles = articles
       , comments =
             articles
@@ -151,7 +152,7 @@ updateFromFrontend sessionId clientId msg model =
         onlyWhenArticleOwner_ slug fn =
             let
                 res =
-                    model |> findArticleBySlug slug
+                    model |> loadArticleBySlug slug sessionId
 
                 userM =
                     model |> getSessionUser sessionId
@@ -188,8 +189,33 @@ updateFromFrontend sessionId clientId msg model =
 
         ArticleFeed_Home_ { page } ->
             let
+                userM =
+                    model |> getSessionUser sessionId
+
                 articleList =
-                    getListing model sessionId Filters.create page
+                    case userM of
+                        Just user ->
+                            let
+                                filtered =
+                                    model.articles
+                                        |> Dict.filter (\slug article -> List.member article.author.username user.following)
+
+                                enriched =
+                                    filtered |> Dict.map (\slug article -> { article | favorited = user.favorites |> List.member slug })
+
+                                grouped =
+                                    enriched |> Dict.values |> List.greedyGroupsOf Api.Article.itemsPerPage
+
+                                articles =
+                                    grouped |> List.getAt (page - 1) |> Maybe.withDefault []
+                            in
+                            { articles = articles
+                            , page = page
+                            , totalPages = grouped |> List.length
+                            }
+
+                        Nothing ->
+                            { articles = [], page = 0, totalPages = 0 }
             in
             send (PageMsg (Gen.Msg.Home_ (Pages.Home_.GotArticles (Success articleList))))
 
@@ -224,7 +250,7 @@ updateFromFrontend sessionId clientId msg model =
         ArticleGet_Article__Slug_ { slug } ->
             let
                 res =
-                    model |> findArticleBySlug slug
+                    model |> loadArticleBySlug slug sessionId
             in
             send (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.GotArticle res)))
 
@@ -310,19 +336,39 @@ updateFromFrontend sessionId clientId msg model =
             )
 
         ProfileGet_Profile__Username_ { username } ->
-            send (PageMsg (Gen.Msg.Profile__Username_ (Pages.Profile.Username_.GotProfile (Success stubProfile))))
+            let
+                res =
+                    model.users
+                        |> Dict.get username
+                        |> Maybe.map Api.User.toProfile
+                        |> Maybe.map Success
+                        |> Maybe.withDefault (Failure [ "user not found" ])
+            in
+            send (PageMsg (Gen.Msg.Profile__Username_ (Pages.Profile.Username_.GotProfile res)))
 
         ProfileFollow_Profile__Username_ { username } ->
-            send (PageMsg (Gen.Msg.Profile__Username_ (Pages.Profile.Username_.GotProfile (Success stubProfile))))
+            followUser sessionId
+                username
+                model
+                (\r -> send_ (PageMsg (Gen.Msg.Profile__Username_ (Pages.Profile.Username_.GotProfile r))))
 
         ProfileUnfollow_Profile__Username_ { username } ->
-            send (PageMsg (Gen.Msg.Profile__Username_ (Pages.Profile.Username_.GotProfile (Success stubProfile))))
+            unfollowUser sessionId
+                username
+                model
+                (\r -> send_ (PageMsg (Gen.Msg.Profile__Username_ (Pages.Profile.Username_.GotProfile r))))
 
         ProfileFollow_Article__Slug_ { username } ->
-            send (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.GotAuthor (Success stubProfile))))
+            followUser sessionId
+                username
+                model
+                (\r -> send_ (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.GotAuthor r))))
 
         ProfileUnfollow_Article__Slug_ { username } ->
-            send (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.GotAuthor (Success stubProfile))))
+            unfollowUser sessionId
+                username
+                model
+                (\r -> send_ (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.GotAuthor r))))
 
         UserAuthentication_Login { user } ->
             let
@@ -367,7 +413,7 @@ getListing model sessionId (Filters { tag, author, favorited }) page =
     let
         filtered =
             model.articles
-                -- |> Filters.byFavorited favorited
+                |> Filters.byFavorite favorited model.users
                 |> Filters.byTag tag
                 |> Filters.byAuthor author
 
@@ -391,12 +437,29 @@ getListing model sessionId (Filters { tag, author, favorited }) page =
     }
 
 
-findArticleBySlug : String -> Model -> Data Article
-findArticleBySlug slug model =
-    model.articles
-        |> Dict.get slug
-        |> Maybe.map Success
-        |> Maybe.withDefault (Failure [ "no article with slug: " ++ slug ])
+loadArticleBySlug : String -> SessionId -> Model -> Data Article
+loadArticleBySlug slug sid model =
+    let
+        res =
+            model.articles
+                |> Dict.get slug
+                |> Maybe.map Success
+                |> Maybe.withDefault (Failure [ "no article with slug: " ++ slug ])
+    in
+    case model |> getSessionUser sid of
+        Just user ->
+            res
+                |> Api.Data.map
+                    (\article ->
+                        let
+                            author_ =
+                                article.author |> (\a -> { a | following = List.member article.author.username user.following })
+                        in
+                        { article | author = author_ }
+                    )
+
+        Nothing ->
+            res
 
 
 uniqueSlug : Model -> String -> Int -> String
@@ -420,12 +483,16 @@ favoriteArticle sessionId slug model toResponseCmd =
     let
         res =
             model
-                |> findArticleBySlug slug
+                |> loadArticleBySlug slug sessionId
                 |> Api.Data.map (\a -> { a | favorited = True })
     in
     case model |> getSessionUser sessionId of
         Just user ->
-            ( model |> addToFavorites slug user
+            ( if model.articles |> Dict.member slug then
+                model |> updateUser { user | favorites = (slug :: user.favorites) |> List.unique }
+
+              else
+                model
             , toResponseCmd res
             )
 
@@ -438,12 +505,12 @@ unfavoriteArticle sessionId slug model toResponseCmd =
     let
         res =
             model
-                |> findArticleBySlug slug
+                |> loadArticleBySlug slug sessionId
                 |> Api.Data.map (\a -> { a | favorited = False })
     in
     case model |> getSessionUser sessionId of
         Just user ->
-            ( model |> removeFromFavorites slug user
+            ( model |> updateUser { user | favorites = user.favorites |> List.remove slug }
             , toResponseCmd res
             )
 
@@ -451,20 +518,50 @@ unfavoriteArticle sessionId slug model toResponseCmd =
             ( model, toResponseCmd <| Failure [ "invalid session" ] )
 
 
-addToFavorites : Slug -> UserFull -> Model -> Model
-addToFavorites slug user model =
-    if model.articles |> Dict.member slug then
-        model |> updateUser user (\user_ -> { user_ | favorites = (slug :: user_.favorites) |> List.unique })
+followUser : SessionId -> Email -> Model -> (Data Profile -> Cmd msg) -> ( Model, Cmd msg )
+followUser sessionId email model toResponseCmd =
+    let
+        res =
+            model.users
+                |> Dict.get email
+                |> Maybe.map Api.User.toProfile
+                |> Maybe.map (\a -> Success { a | following = True })
+                |> Maybe.withDefault (Failure [ "invalid user" ])
+    in
+    case model |> getSessionUser sessionId of
+        Just user ->
+            ( if model.users |> Dict.member email then
+                model |> updateUser { user | following = (email :: user.following) |> List.unique }
 
-    else
-        model
+              else
+                model
+            , toResponseCmd res
+            )
+
+        Nothing ->
+            ( model, toResponseCmd <| Failure [ "invalid session" ] )
 
 
-removeFromFavorites : Slug -> UserFull -> Model -> Model
-removeFromFavorites slug user model =
-    model |> updateUser user (\user_ -> { user_ | favorites = user_.favorites |> List.remove slug })
+unfollowUser : SessionId -> Email -> Model -> (Data Profile -> Cmd msg) -> ( Model, Cmd msg )
+unfollowUser sessionId email model toResponseCmd =
+    let
+        res =
+            model.users
+                |> Dict.get email
+                |> Maybe.map Api.User.toProfile
+                |> Maybe.map (\a -> Success { a | following = False })
+                |> Maybe.withDefault (Failure [ "invalid user" ])
+    in
+    case model |> getSessionUser sessionId of
+        Just user ->
+            ( model |> updateUser { user | following = user.following |> List.remove email }
+            , toResponseCmd res
+            )
+
+        Nothing ->
+            ( model, toResponseCmd <| Failure [ "invalid session" ] )
 
 
-updateUser : UserFull -> (UserFull -> UserFull) -> Model -> Model
-updateUser user fn model =
-    { model | users = model.users |> Dict.update user.username (Maybe.map fn) }
+updateUser : UserFull -> Model -> Model
+updateUser user model =
+    { model | users = model.users |> Dict.update user.username (Maybe.map (always user)) }

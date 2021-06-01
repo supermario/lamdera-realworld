@@ -58,3 +58,17 @@ byAuthor mAuthor articles =
 
         Nothing ->
             articles
+
+
+byFavorite mUsername users articles =
+    case mUsername of
+        Just username ->
+            case users |> Dict.get username of
+                Just user ->
+                    articles |> Dict.filter (\slug a -> List.member slug user.favorites)
+
+                Nothing ->
+                    articles
+
+        Nothing ->
+            articles

@@ -1,8 +1,4 @@
-module Api.Data exposing
-    ( Data(..)
-    , map
-    , toMaybe
-    )
+module Api.Data exposing (Data(..), map, toMaybe)
 
 import Http
 
