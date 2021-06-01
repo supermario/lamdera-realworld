@@ -6,6 +6,8 @@ module Api.User exposing (..)
 
 -}
 
+import Api.Profile exposing (Profile)
+
 
 type alias User =
     { email : Email
@@ -21,6 +23,7 @@ type alias UserFull =
     , bio : Maybe String
     , image : String
     , password : String
+    , favorites : List String -- Slugs
     }
 
 
@@ -30,6 +33,15 @@ toUser u =
     , username = u.username
     , bio = u.bio
     , image = u.image
+    }
+
+
+toProfile : UserFull -> Profile
+toProfile u =
+    { username = u.username
+    , bio = u.bio
+    , image = u.image
+    , following = False
     }
 
 

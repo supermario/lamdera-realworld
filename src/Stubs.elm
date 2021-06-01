@@ -30,6 +30,40 @@ stubArticle =
     }
 
 
+stubArticle2 : Article
+stubArticle2 =
+    { slug = "stub"
+    , title = "stub"
+    , description = "stub"
+    , body = "stub"
+    , tags = [ "stub" ]
+    , createdAt = Time.millisToPosix 0
+    , updatedAt = Time.millisToPosix 0
+    , favorited = False
+    , favoritesCount = 123
+    , author = { stubProfile | username = "bob@bob.com" }
+    }
+
+
+stubArticle_ : Int -> Article
+stubArticle_ i =
+    let
+        iden =
+            "stub-" ++ String.fromInt i
+    in
+    { slug = iden
+    , title = iden
+    , description = "stub"
+    , body = iden
+    , tags = [ iden ]
+    , createdAt = Time.millisToPosix 1234567890123
+    , updatedAt = Time.millisToPosix 1234567890123
+    , favorited = False
+    , favoritesCount = 123
+    , author = stubProfile
+    }
+
+
 stubArticleCreate : { title : String, description : String, body : String, tags : List String } -> Article
 stubArticleCreate p =
     { slug = "stub"
@@ -70,6 +104,7 @@ stubUserFull =
     , bio = Just "test bio"
     , image = "https://static.productionready.io/images/smiley-cyrus.jpg"
     , password = "test"
+    , favorites = []
     }
 
 

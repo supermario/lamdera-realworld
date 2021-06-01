@@ -96,7 +96,7 @@ update req msg model =
             ( model
             , ArticleUpdate_Editor__ArticleSlug_
                 { slug = model.slug
-                , article =
+                , updates =
                     { title = form.title
                     , description = form.description
                     , body = form.body

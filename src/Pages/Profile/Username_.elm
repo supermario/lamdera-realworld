@@ -70,7 +70,7 @@ fetchArticlesBy : String -> Int -> Cmd Msg
 fetchArticlesBy username page_ =
     ArticleList_Username_
         { page = page_
-        , filters = Filters.create |> Filters.byAuthor username
+        , filters = Filters.create |> Filters.withAuthor username
         }
         |> sendToBackend
 

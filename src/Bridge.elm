@@ -24,7 +24,7 @@ type ToBackend
         }
     | ArticleUpdate_Editor__ArticleSlug_
         { slug : String
-        , article :
+        , updates :
             { title : String, description : String, body : String, tags : List String }
         }
     | ArticleDelete_Article__Slug_ { slug : String }

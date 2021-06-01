@@ -1,16 +1,15 @@
-module Api.Article.Filters exposing
-    ( Filters, create
-    , withTag, byAuthor, favoritedBy
-    )
+module Api.Article.Filters exposing (..)
+
+import Dict
+
 
 {-|
 
 @docs Filters, create
-@docs withTag, byAuthor, favoritedBy
+@docs withTag, withAuthor, favoritedBy
+@docs byTag, byAuthor
 
 -}
-
-
 type Filters
     = Filters
         { tag : Maybe String
@@ -33,11 +32,29 @@ withTag tag (Filters filters) =
     Filters { filters | tag = Just tag }
 
 
-byAuthor : String -> Filters -> Filters
-byAuthor username (Filters filters) =
+withAuthor : String -> Filters -> Filters
+withAuthor username (Filters filters) =
     Filters { filters | author = Just username }
 
 
 favoritedBy : String -> Filters -> Filters
 favoritedBy username (Filters filters) =
     Filters { filters | favorited = Just username }
+
+
+byTag mTag articles =
+    case mTag of
+        Just tag ->
+            articles |> Dict.filter (\k a -> a.tags |> List.member tag)
+
+        Nothing ->
+            articles
+
+
+byAuthor mAuthor articles =
+    case mAuthor of
+        Just author ->
+            articles |> Dict.filter (\k a -> a.author.username == author)
+
+        Nothing ->
+            articles
