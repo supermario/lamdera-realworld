@@ -83,7 +83,7 @@ update req msg model =
             ( model
             , (Effect.fromCmd << sendToBackend) <|
                 UserAuthentication_Login
-                    { user =
+                    { params =
                         { email = model.email
                         , password = model.password
                         }

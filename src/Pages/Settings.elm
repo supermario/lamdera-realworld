@@ -108,7 +108,7 @@ update msg model =
             ( { model | message = Nothing, errors = [] }
             , (Effect.fromCmd << sendToBackend) <|
                 UserUpdate_Settings
-                    { user =
+                    { params =
                         { username = model.username
                         , email = model.email
                         , password = model.password

@@ -91,7 +91,7 @@ update req msg model =
             ( model
             , (Effect.fromCmd << sendToBackend) <|
                 UserRegistration_Register
-                    { user =
+                    { params =
                         { username = model.username
                         , email = model.email
                         , password = model.password

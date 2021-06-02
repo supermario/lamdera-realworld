@@ -19,7 +19,6 @@ import Pages.Login
 import Pages.Profile.Username_
 import Pages.Register
 import Pages.Settings
-import Stubs exposing (..)
 import Task
 import Time
 import Time.Extra as Time
@@ -41,22 +40,10 @@ app =
 
 init : ( Model, Cmd BackendMsg )
 init =
-    let
-        articles =
-            [ ( stubArticle.slug, stubArticle ), ( stubArticle2.slug, stubArticle2 ) ]
-                |> Dict.fromList
-    in
     ( { sessions = Dict.empty
-      , users = stubUsersFull |> List.map (\u -> ( u.email, u )) |> Dict.fromList
-      , articles = articles
-      , comments =
-            articles
-                |> Dict.map
-                    (\k a ->
-                        stubComments
-                            |> List.map (\c -> ( Time.posixToMillis c.createdAt, c ))
-                            |> Dict.fromList
-                    )
+      , users = Dict.empty
+      , articles = Dict.empty
+      , comments = Dict.empty
       }
     , Cmd.none
     )
@@ -370,15 +357,15 @@ updateFromFrontend sessionId clientId msg model =
                 model
                 (\r -> send_ (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.GotAuthor r))))
 
-        UserAuthentication_Login { user } ->
+        UserAuthentication_Login { params } ->
             let
                 ( response, cmd ) =
                     model.users
-                        |> Dict.get user.email
+                        |> Dict.get params.email
                         |> Maybe.map
                             (\u ->
-                                if u.password == user.password then
-                                    ( Success (Api.User.toUser u), renewSession user.email sessionId clientId )
+                                if u.password == params.password then
+                                    ( Success (Api.User.toUser u), renewSession params.email sessionId clientId )
 
                                 else
                                     ( Failure [ "email or password is invalid" ], Cmd.none )
@@ -387,11 +374,53 @@ updateFromFrontend sessionId clientId msg model =
             in
             ( model, Cmd.batch [ send_ (PageMsg (Gen.Msg.Login (Pages.Login.GotUser response))), cmd ] )
 
-        UserRegistration_Register { user } ->
-            send (PageMsg (Gen.Msg.Register (Pages.Register.GotUser (Success stubUser))))
+        UserRegistration_Register { params } ->
+            let
+                ( model_, cmd, res ) =
+                    if model.users |> Dict.member params.email then
+                        ( model, Cmd.none, Failure [ "email address already taken" ] )
 
-        UserUpdate_Settings { user } ->
-            send (PageMsg (Gen.Msg.Settings (Pages.Settings.GotUser (Success stubUser))))
+                    else
+                        let
+                            user_ =
+                                { email = params.email
+                                , username = params.username
+                                , bio = Nothing
+                                , image = "https://static.productionready.io/images/smiley-cyrus.jpg"
+                                , password = params.password
+                                , favorites = []
+                                , following = []
+                                }
+                        in
+                        ( { model | users = model.users |> Dict.insert user_.email user_ }
+                        , renewSession params.email sessionId clientId
+                        , Success (Api.User.toUser user_)
+                        )
+            in
+            ( model_, Cmd.batch [ cmd, send_ (PageMsg (Gen.Msg.Register (Pages.Register.GotUser res))) ] )
+
+        UserUpdate_Settings { params } ->
+            let
+                ( model_, res ) =
+                    case model |> getSessionUser sessionId of
+                        Just user ->
+                            let
+                                user_ =
+                                    { user
+                                        | username = params.username
+
+                                        -- , email = params.email
+                                        , password = params.password |> Maybe.withDefault user.password
+                                        , image = params.image
+                                        , bio = Just params.bio
+                                    }
+                            in
+                            ( model |> updateUser user_, Success (Api.User.toUser user_) )
+
+                        Nothing ->
+                            ( model, Failure [ "you do not have permission for this user" ] )
+            in
+            ( model_, send_ (PageMsg (Gen.Msg.Settings (Pages.Settings.GotUser res))) )
 
         NoOpToBackend ->
             ( model, Cmd.none )

@@ -42,10 +42,10 @@ type ToBackend
     | ProfileUnfollow_Profile__Username_ { username : String }
     | ProfileFollow_Article__Slug_ { username : String }
     | ProfileUnfollow_Article__Slug_ { username : String }
-    | UserAuthentication_Login { user : { email : String, password : String } }
-    | UserRegistration_Register { user : { username : String, email : String, password : String } }
+    | UserAuthentication_Login { params : { email : String, password : String } }
+    | UserRegistration_Register { params : { username : String, email : String, password : String } }
     | UserUpdate_Settings
-        { user :
+        { params :
             { username : String
             , email : String
             , password : Maybe String
