@@ -8,8 +8,8 @@
 
 You can take a look at how the conversion progressed in two PRs:
 
-- #1 Porting all HTTP API calls to `Lamdera.sendToBackend` and removing all JSON encoders/decoders
-- #2 Implementing the full Realworld backend functionality in Elm
+- [#1](https://github.com/supermario/lamdera-realworld/pull/1) Porting all HTTP API calls to `Lamdera.sendToBackend` and removing all JSON encoders/decoders
+- [#2](https://github.com/supermario/lamdera-realworld/pull/2) Implementing the full Realworld backend functionality in Elm
 
 
 # How it works
