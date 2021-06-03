@@ -1,38 +1,44 @@
 # ![RealWorld Example App](logo.png)
 
-> ### An __elm-spa__ codebase containing real world examples (CRUD, auth, advanced patterns, etc) that adheres to the [RealWorld](https://github.com/gothinkster/realworld) spec and API.
-
-![elm-test](https://github.com/ryannhg/elm-spa-realworld/workflows/elm-test/badge.svg?branch=master)
-
-### [Demo](https://realworld.elm-spa.dev/)&nbsp;&nbsp;&nbsp;&nbsp;[RealWorld](https://github.com/gothinkster/realworld)
+> ### Lamdera port of [elm-spa realworld frontend](https://github.com/ryannhg/elm-spa-realworld), adding a full backend implementation.
 
 
-This codebase was created to demonstrate a fully fledged fullstack application built with **elm-spa** including CRUD operations, authentication, routing, pagination, and more.
+### [Demo](https://realworld.lamdera.app/)&nbsp;&nbsp;&nbsp;&nbsp;[RealWorld Spec](https://github.com/gothinkster/realworld)
 
-We've gone to great lengths to adhere to the **elm-spa** community styleguides & best practices.
 
-For more information on how to this works with other frontends/backends, head over to the [RealWorld](https://github.com/gothinkster/realworld) repo.
+You can take a look at how the conversion progressed in two PRs:
+
+- #1 Porting all HTTP API calls to `Lamdera.sendToBackend` and removing all JSON encoders/decoders
+- #2 Implementing the full Realworld backend functionality in Elm
 
 
 # How it works
 
-> This application was built with [elm-spa](https://elm-spa.dev), a friendly tool for building SPAs with Elm!
+This application was built with
+
+- [Lamdera](https://lamdera.com), a delightful platform
+for full-stack web apps
+- [elm-spa](https://elm-spa.dev), a friendly tool for building SPAs with Elm!
 
 Check out the [the source code](./src) to get a feel for the project structure!
 
 ```
 src/
+  Types.elm
+  Bridge.elm
+  Frontend.elm
+  Backend.elm
   Api/...
   Components/...
   Pages/...
   Utils/...
-  Main.elm
-  Shared.elm
-  Ports.elm
 ```
 
 # Getting started
 
 ```
-elm-spa server
+elm-spa make
+lamdera live
 ```
+
+See [Getting Started](https://lamdera.com/start) if you're new to Lamdera.
