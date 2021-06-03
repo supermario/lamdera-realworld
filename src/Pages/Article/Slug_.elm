@@ -13,8 +13,8 @@ import Html exposing (..)
 import Html.Attributes exposing (attribute, class, href, placeholder, src, value)
 import Html.Events as Events
 import Markdown
-import Page exposing (Page)
-import Request exposing (Request)
+import Page
+import Request
 import Shared
 import Utils.Maybe
 import Utils.Route

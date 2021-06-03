@@ -13,7 +13,7 @@ import Bridge exposing (..)
 import Components.Footer
 import Components.Navbar
 import Html exposing (..)
-import Html.Attributes exposing (class, href, rel, type_)
+import Html.Attributes exposing (class, href, rel)
 import Request exposing (Request)
 import Utils.Route
 import View exposing (View)

@@ -13,8 +13,8 @@ import Gen.Params.Profile.Username_ exposing (Params)
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, src)
 import Html.Events as Events
-import Page exposing (Page)
-import Request exposing (Request)
+import Page
+import Request
 import Shared
 import Utils.Maybe
 import View exposing (View)
@@ -70,7 +70,7 @@ fetchArticlesBy : String -> Int -> Cmd Msg
 fetchArticlesBy username page_ =
     ArticleList_Username_
         { page = page_
-        , filters = Filters.create |> Filters.byAuthor username
+        , filters = Filters.create |> Filters.withAuthor username
         }
         |> sendToBackend
 

@@ -8,7 +8,7 @@ import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (attribute, class, placeholder, type_, value)
 import Html.Events as Events
-import Page exposing (Page)
+import Page
 import Request exposing (Request)
 import Shared
 import Utils.Maybe
@@ -108,7 +108,7 @@ update msg model =
             ( { model | message = Nothing, errors = [] }
             , (Effect.fromCmd << sendToBackend) <|
                 UserUpdate_Settings
-                    { user =
+                    { params =
                         { username = model.username
                         , email = model.email
                         , password = model.password

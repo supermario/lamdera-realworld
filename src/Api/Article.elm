@@ -1,8 +1,8 @@
-module Api.Article exposing (Article, Listing, updateArticle)
+module Api.Article exposing (..)
 
 {-|
 
-@docs Article, Listing, updateArticle
+@docs Article, Listing, updateArticle, itemsPerPage
 
 -}
 
@@ -11,7 +11,7 @@ import Time
 
 
 type alias Article =
-    { slug : String
+    { slug : Slug
     , title : String
     , description : String
     , body : String
@@ -22,6 +22,22 @@ type alias Article =
     , favoritesCount : Int
     , author : Profile
     }
+
+
+type alias ArticleStore =
+    { slug : Slug
+    , title : String
+    , description : String
+    , body : String
+    , tags : List String
+    , createdAt : Time.Posix
+    , updatedAt : Time.Posix
+    , userId : Int
+    }
+
+
+type alias Slug =
+    String
 
 
 type alias Listing =

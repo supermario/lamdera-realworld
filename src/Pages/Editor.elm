@@ -6,8 +6,7 @@ import Api.User exposing (User)
 import Bridge exposing (..)
 import Components.Editor exposing (Field, Form)
 import Gen.Route as Route
-import Html exposing (..)
-import Page exposing (Page)
+import Page
 import Request exposing (Request)
 import Shared
 import Utils.Route

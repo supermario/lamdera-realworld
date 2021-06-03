@@ -1,6 +1,5 @@
 module View exposing (View, map, none, placeholder)
 
-import Browser
 import Html exposing (Html)
 
 

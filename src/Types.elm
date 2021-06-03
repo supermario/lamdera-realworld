@@ -1,13 +1,14 @@
 module Types exposing (..)
 
-import Api.Data exposing (..)
-import Api.User as User
+import Api.Article exposing (ArticleStore, Slug)
+import Api.Article.Comment exposing (Comment)
+import Api.User exposing (User, UserFull, UserId)
 import Bridge
-import Browser exposing (UrlRequest)
+import Browser
 import Browser.Navigation exposing (Key)
 import Dict exposing (Dict)
 import Gen.Pages as Pages
-import Lamdera exposing (SessionId)
+import Lamdera exposing (ClientId, SessionId)
 import Shared
 import Time
 import Url exposing (Url)
@@ -23,11 +24,14 @@ type alias FrontendModel =
 
 type alias BackendModel =
     { sessions : Dict SessionId Session
+    , users : Dict Int UserFull
+    , articles : Dict Slug ArticleStore
+    , comments : Dict Slug (Dict Int Comment)
     }
 
 
 type alias Session =
-    { email : String, expires : Time.Posix }
+    { userId : Int, expires : Time.Posix }
 
 
 type FrontendMsg
@@ -43,9 +47,14 @@ type alias ToBackend =
 
 
 type BackendMsg
-    = NoOpBackendMsg
+    = CheckSession SessionId ClientId
+    | RenewSession UserId SessionId ClientId Time.Posix
+    | ArticleCreated Time.Posix (Maybe UserFull) ClientId { title : String, description : String, body : String, tags : List String }
+    | ArticleCommentCreated Time.Posix (Maybe UserFull) ClientId Slug { body : String }
+    | NoOpBackendMsg
 
 
 type ToFrontend
-    = PageMsg Pages.Msg
+    = ActiveSession User
+    | PageMsg Pages.Msg
     | NoOpToFrontend

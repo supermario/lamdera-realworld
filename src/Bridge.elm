@@ -1,6 +1,6 @@
 module Bridge exposing (..)
 
-import Api.Article.Filters as Filters exposing (Filters)
+import Api.Article.Filters exposing (Filters)
 import Api.User exposing (User)
 import Lamdera
 
@@ -24,7 +24,7 @@ type ToBackend
         }
     | ArticleUpdate_Editor__ArticleSlug_
         { slug : String
-        , article :
+        , updates :
             { title : String, description : String, body : String, tags : List String }
         }
     | ArticleDelete_Article__Slug_ { slug : String }
@@ -42,10 +42,10 @@ type ToBackend
     | ProfileUnfollow_Profile__Username_ { username : String }
     | ProfileFollow_Article__Slug_ { username : String }
     | ProfileUnfollow_Article__Slug_ { username : String }
-    | UserAuthentication_Login { user : { email : String, password : String } }
-    | UserRegistration_Register { user : { username : String, email : String, password : String } }
+    | UserAuthentication_Login { params : { email : String, password : String } }
+    | UserRegistration_Register { params : { username : String, email : String, password : String } }
     | UserUpdate_Settings
-        { user :
+        { params :
             { username : String
             , email : String
             , password : Maybe String

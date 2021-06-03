@@ -1,10 +1,4 @@
-module Api.Data exposing
-    ( Data(..)
-    , map
-    , toMaybe
-    )
-
-import Http
+module Api.Data exposing (Data(..), map, toMaybe)
 
 
 type Data value
@@ -38,13 +32,3 @@ toMaybe data =
 
         _ ->
             Nothing
-
-
-fromResult : Result (List String) value -> Data value
-fromResult result =
-    case result of
-        Ok value ->
-            Success value
-
-        Err reasons ->
-            Failure reasons
