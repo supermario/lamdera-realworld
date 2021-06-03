@@ -1,6 +1,7 @@
 module Api.Article.Filters exposing (..)
 
 import Dict
+import Dict.Extra as Dict
 
 
 {-|
@@ -51,10 +52,15 @@ byTag mTag articles =
             articles
 
 
-byAuthor mAuthor articles =
+byAuthor mAuthor users articles =
     case mAuthor of
-        Just author ->
-            articles |> Dict.filter (\k a -> a.author.username == author)
+        Just username ->
+            case users |> Dict.find (\k u -> u.username == username) |> Maybe.map Tuple.second of
+                Just user ->
+                    articles |> Dict.filter (\k a -> a.userId == user.id)
+
+                Nothing ->
+                    articles
 
         Nothing ->
             articles
@@ -63,7 +69,7 @@ byAuthor mAuthor articles =
 byFavorite mUsername users articles =
     case mUsername of
         Just username ->
-            case users |> Dict.get username of
+            case users |> Dict.find (\k u -> u.username == username) |> Maybe.map Tuple.second of
                 Just user ->
                     articles |> Dict.filter (\slug a -> List.member slug user.favorites)
 

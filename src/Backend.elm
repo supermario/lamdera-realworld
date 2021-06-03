@@ -1,12 +1,13 @@
 module Backend exposing (..)
 
-import Api.Article exposing (Article, Slug)
+import Api.Article exposing (Article, ArticleStore, Slug)
 import Api.Article.Filters as Filters exposing (Filters(..))
 import Api.Data exposing (Data(..))
 import Api.Profile exposing (Profile)
-import Api.User exposing (Email, User, UserFull)
+import Api.User exposing (Email, User, UserFull, UserId)
 import Bridge exposing (..)
 import Dict
+import Dict.Extra as Dict
 import Gen.Msg
 import Html
 import Lamdera exposing (..)
@@ -58,8 +59,8 @@ update msg model =
                 |> Maybe.map (\user -> ( model, sendToFrontend cid (ActiveSession (Api.User.toUser user)) ))
                 |> Maybe.withDefault ( model, Cmd.none )
 
-        RenewSession email sid cid now ->
-            ( { model | sessions = model.sessions |> Dict.update sid (always (Just { email = email, expires = now |> Time.add Time.Day 30 Time.utc })) }, Cmd.none )
+        RenewSession uid sid cid now ->
+            ( { model | sessions = model.sessions |> Dict.update sid (always (Just { userId = uid, expires = now |> Time.add Time.Day 30 Time.utc })) }, Cmd.none )
 
         ArticleCreated t userM clientId article ->
             case userM of
@@ -73,13 +74,14 @@ update msg model =
                             , tags = article.tags
                             , createdAt = t
                             , updatedAt = t
-                            , favorited = False
-                            , favoritesCount = 0
-                            , author = Api.User.toProfile user
+                            , userId = user.id
                             }
+
+                        res =
+                            Success <| loadArticleFromStore model userM article_
                     in
                     ( { model | articles = model.articles |> Dict.insert article_.slug article_ }
-                    , sendToFrontend clientId (PageMsg (Gen.Msg.Editor (Pages.Editor.GotArticle (Success article_))))
+                    , sendToFrontend clientId (PageMsg (Gen.Msg.Editor (Pages.Editor.GotArticle res)))
                     )
 
                 Nothing ->
@@ -185,10 +187,10 @@ updateFromFrontend sessionId clientId msg model =
                             let
                                 filtered =
                                     model.articles
-                                        |> Dict.filter (\slug article -> List.member article.author.username user.following)
+                                        |> Dict.filter (\slug article -> List.member article.userId user.following)
 
                                 enriched =
-                                    filtered |> Dict.map (\slug article -> { article | favorited = user.favorites |> List.member slug })
+                                    filtered |> Dict.map (\slug article -> loadArticleFromStore model userM article)
 
                                 grouped =
                                     enriched |> Dict.values |> List.greedyGroupsOf Api.Article.itemsPerPage
@@ -231,6 +233,7 @@ updateFromFrontend sessionId clientId msg model =
                         |> Dict.get slug
                         |> Maybe.map Success
                         |> Maybe.withDefault (Failure [ "no article with slug: " ++ slug ])
+                        |> Api.Data.map (loadArticleFromStore model (model |> getSessionUser sessionId))
             in
             ( { model | articles = articles }, send_ (PageMsg (Gen.Msg.Editor__ArticleSlug_ (Pages.Editor.ArticleSlug_.UpdatedArticle res))) )
 
@@ -325,9 +328,7 @@ updateFromFrontend sessionId clientId msg model =
         ProfileGet_Profile__Username_ { username } ->
             let
                 res =
-                    model.users
-                        |> Dict.get username
-                        |> Maybe.map Api.User.toProfile
+                    profileByUsername username model
                         |> Maybe.map Success
                         |> Maybe.withDefault (Failure [ "user not found" ])
             in
@@ -361,11 +362,11 @@ updateFromFrontend sessionId clientId msg model =
             let
                 ( response, cmd ) =
                     model.users
-                        |> Dict.get params.email
+                        |> Dict.find (\k u -> u.email == params.email)
                         |> Maybe.map
-                            (\u ->
+                            (\( k, u ) ->
                                 if u.password == params.password then
-                                    ( Success (Api.User.toUser u), renewSession params.email sessionId clientId )
+                                    ( Success (Api.User.toUser u), renewSession u.id sessionId clientId )
 
                                 else
                                     ( Failure [ "email or password is invalid" ], Cmd.none )
@@ -377,13 +378,14 @@ updateFromFrontend sessionId clientId msg model =
         UserRegistration_Register { params } ->
             let
                 ( model_, cmd, res ) =
-                    if model.users |> Dict.member params.email then
+                    if model.users |> Dict.any (\k u -> u.email == params.email) then
                         ( model, Cmd.none, Failure [ "email address already taken" ] )
 
                     else
                         let
                             user_ =
-                                { email = params.email
+                                { id = Dict.size model.users
+                                , email = params.email
                                 , username = params.username
                                 , bio = Nothing
                                 , image = "https://static.productionready.io/images/smiley-cyrus.jpg"
@@ -392,8 +394,8 @@ updateFromFrontend sessionId clientId msg model =
                                 , following = []
                                 }
                         in
-                        ( { model | users = model.users |> Dict.insert user_.email user_ }
-                        , renewSession params.email sessionId clientId
+                        ( { model | users = model.users |> Dict.insert user_.id user_ }
+                        , renewSession user_.id sessionId clientId
                         , Success (Api.User.toUser user_)
                         )
             in
@@ -430,7 +432,7 @@ getSessionUser : SessionId -> Model -> Maybe UserFull
 getSessionUser sid model =
     model.sessions
         |> Dict.get sid
-        |> Maybe.andThen (\session -> model.users |> Dict.get session.email)
+        |> Maybe.andThen (\session -> model.users |> Dict.get session.userId)
 
 
 renewSession email sid cid =
@@ -444,15 +446,10 @@ getListing model sessionId (Filters { tag, author, favorited }) page =
             model.articles
                 |> Filters.byFavorite favorited model.users
                 |> Filters.byTag tag
-                |> Filters.byAuthor author
+                |> Filters.byAuthor author model.users
 
         enriched =
-            case model |> getSessionUser sessionId of
-                Just user ->
-                    filtered |> Dict.map (\slug article -> { article | favorited = user.favorites |> List.member slug })
-
-                Nothing ->
-                    filtered
+            filtered |> Dict.map (\slug article -> loadArticleFromStore model (model |> getSessionUser sessionId) article)
 
         grouped =
             enriched |> Dict.values |> List.greedyGroupsOf Api.Article.itemsPerPage
@@ -468,27 +465,11 @@ getListing model sessionId (Filters { tag, author, favorited }) page =
 
 loadArticleBySlug : String -> SessionId -> Model -> Data Article
 loadArticleBySlug slug sid model =
-    let
-        res =
-            model.articles
-                |> Dict.get slug
-                |> Maybe.map Success
-                |> Maybe.withDefault (Failure [ "no article with slug: " ++ slug ])
-    in
-    case model |> getSessionUser sid of
-        Just user ->
-            res
-                |> Api.Data.map
-                    (\article ->
-                        let
-                            author_ =
-                                article.author |> (\a -> { a | following = List.member article.author.username user.following })
-                        in
-                        { article | author = author_ }
-                    )
-
-        Nothing ->
-            res
+    model.articles
+        |> Dict.get slug
+        |> Maybe.map Success
+        |> Maybe.withDefault (Failure [ "no article with slug: " ++ slug ])
+        |> Api.Data.map (loadArticleFromStore model (model |> getSessionUser sid))
 
 
 uniqueSlug : Model -> String -> Int -> String
@@ -551,19 +532,18 @@ followUser : SessionId -> Email -> Model -> (Data Profile -> Cmd msg) -> ( Model
 followUser sessionId email model toResponseCmd =
     let
         res =
-            model.users
-                |> Dict.get email
-                |> Maybe.map Api.User.toProfile
+            profileByEmail email model
                 |> Maybe.map (\a -> Success { a | following = True })
                 |> Maybe.withDefault (Failure [ "invalid user" ])
     in
     case model |> getSessionUser sessionId of
         Just user ->
-            ( if model.users |> Dict.member email then
-                model |> updateUser { user | following = (email :: user.following) |> List.unique }
+            ( case model.users |> Dict.find (\l u -> u.email == email) of
+                Just ( _, follow ) ->
+                    model |> updateUser { user | following = (follow.id :: user.following) |> List.unique }
 
-              else
-                model
+                Nothing ->
+                    model
             , toResponseCmd res
             )
 
@@ -573,24 +553,60 @@ followUser sessionId email model toResponseCmd =
 
 unfollowUser : SessionId -> Email -> Model -> (Data Profile -> Cmd msg) -> ( Model, Cmd msg )
 unfollowUser sessionId email model toResponseCmd =
-    let
-        res =
-            model.users
-                |> Dict.get email
-                |> Maybe.map Api.User.toProfile
-                |> Maybe.map (\a -> Success { a | following = False })
-                |> Maybe.withDefault (Failure [ "invalid user" ])
-    in
-    case model |> getSessionUser sessionId of
-        Just user ->
-            ( model |> updateUser { user | following = user.following |> List.remove email }
-            , toResponseCmd res
-            )
+    case model.users |> Dict.find (\k u -> u.email == email) of
+        Just ( _, followed ) ->
+            let
+                res =
+                    followed
+                        |> Api.User.toProfile
+                        |> (\a -> Success { a | following = False })
+            in
+            case model |> getSessionUser sessionId of
+                Just user ->
+                    ( model |> updateUser { user | following = user.following |> List.remove followed.id }
+                    , toResponseCmd res
+                    )
+
+                Nothing ->
+                    ( model, toResponseCmd <| Failure [ "invalid session" ] )
 
         Nothing ->
-            ( model, toResponseCmd <| Failure [ "invalid session" ] )
+            ( model, toResponseCmd <| Failure [ "invalid user" ] )
 
 
 updateUser : UserFull -> Model -> Model
 updateUser user model =
-    { model | users = model.users |> Dict.update user.username (Maybe.map (always user)) }
+    { model | users = model.users |> Dict.update user.id (Maybe.map (always user)) }
+
+
+profileByUsername username model =
+    model.users |> Dict.find (\k u -> u.username == username) |> Maybe.map (Tuple.second >> Api.User.toProfile)
+
+
+profileByEmail email model =
+    model.users |> Dict.find (\k u -> u.email == email) |> Maybe.map (Tuple.second >> Api.User.toProfile)
+
+
+loadArticleFromStore : Model -> Maybe UserFull -> ArticleStore -> Article
+loadArticleFromStore model userM store =
+    let
+        favorited =
+            userM |> Maybe.map (\user -> user.favorites |> List.member store.slug) |> Maybe.withDefault False
+
+        author =
+            model.users
+                |> Dict.get store.userId
+                |> Maybe.map Api.User.toProfile
+                |> Maybe.withDefault { username = "error: unknown user", bio = Nothing, image = "", following = False }
+    in
+    { slug = store.slug
+    , title = store.title
+    , description = store.description
+    , body = store.body
+    , tags = store.tags
+    , createdAt = store.createdAt
+    , updatedAt = store.updatedAt
+    , favorited = favorited
+    , favoritesCount = model.users |> Dict.filter (\_ user -> user.favorites |> List.member store.slug) |> Dict.size
+    , author = author
+    }

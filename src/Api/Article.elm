@@ -24,6 +24,18 @@ type alias Article =
     }
 
 
+type alias ArticleStore =
+    { slug : Slug
+    , title : String
+    , description : String
+    , body : String
+    , tags : List String
+    , createdAt : Time.Posix
+    , updatedAt : Time.Posix
+    , userId : Int
+    }
+
+
 type alias Slug =
     String
 

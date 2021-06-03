@@ -6,11 +6,13 @@ module Api.User exposing (..)
 
 -}
 
+import Api.Article exposing (Slug)
 import Api.Profile exposing (Profile)
 
 
 type alias User =
-    { email : Email
+    { id : Int
+    , email : Email
     , username : String
     , bio : Maybe String
     , image : String
@@ -18,19 +20,25 @@ type alias User =
 
 
 type alias UserFull =
-    { email : Email
+    { id : Int
+    , email : Email
     , username : String
     , bio : Maybe String
     , image : String
     , password : String
-    , favorites : List String -- Slugs
-    , following : List Email
+    , favorites : List Slug
+    , following : List UserId
     }
+
+
+type alias UserId =
+    Int
 
 
 toUser : UserFull -> User
 toUser u =
-    { email = u.email
+    { id = u.id
+    , email = u.email
     , username = u.username
     , bio = u.bio
     , image = u.image
