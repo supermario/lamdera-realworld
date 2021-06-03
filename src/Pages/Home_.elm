@@ -9,7 +9,7 @@ import Components.ArticleList
 import Html exposing (..)
 import Html.Attributes exposing (class, classList)
 import Html.Events as Events
-import Page exposing (Page)
+import Page
 import Request exposing (Request)
 import Shared
 import Utils.Maybe

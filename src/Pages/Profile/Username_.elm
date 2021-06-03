@@ -13,8 +13,8 @@ import Gen.Params.Profile.Username_ exposing (Params)
 import Html exposing (..)
 import Html.Attributes exposing (class, classList, src)
 import Html.Events as Events
-import Page exposing (Page)
-import Request exposing (Request)
+import Page
+import Request
 import Shared
 import Utils.Maybe
 import View exposing (View)

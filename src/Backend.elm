@@ -4,12 +4,11 @@ import Api.Article exposing (Article, ArticleStore, Slug)
 import Api.Article.Filters as Filters exposing (Filters(..))
 import Api.Data exposing (Data(..))
 import Api.Profile exposing (Profile)
-import Api.User exposing (Email, User, UserFull, UserId)
+import Api.User exposing (Email, UserFull)
 import Bridge exposing (..)
 import Dict
 import Dict.Extra as Dict
 import Gen.Msg
-import Html
 import Lamdera exposing (..)
 import List.Extra as List
 import Pages.Article.Slug_
@@ -23,7 +22,7 @@ import Pages.Settings
 import Task
 import Time
 import Time.Extra as Time
-import Types exposing (BackendModel, BackendMsg(..), FrontendModel, FrontendMsg(..), ToFrontend(..))
+import Types exposing (BackendModel, BackendMsg(..), FrontendMsg(..), ToFrontend(..))
 
 
 type alias Model =
@@ -60,7 +59,9 @@ update msg model =
                 |> Maybe.withDefault ( model, Cmd.none )
 
         RenewSession uid sid cid now ->
-            ( { model | sessions = model.sessions |> Dict.update sid (always (Just { userId = uid, expires = now |> Time.add Time.Day 30 Time.utc })) }, Cmd.none )
+            ( { model | sessions = model.sessions |> Dict.update sid (always (Just { userId = uid, expires = now |> Time.add Time.Day 30 Time.utc })) }
+            , Time.now |> Task.perform (always (CheckSession sid cid))
+            )
 
         ArticleCreated t userM clientId article ->
             case userM of

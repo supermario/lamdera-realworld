@@ -1,15 +1,12 @@
 module Frontend exposing (..)
 
-import Bridge exposing (..)
-import Browser exposing (UrlRequest(..))
+import Browser
 import Browser.Dom
 import Browser.Navigation as Nav exposing (Key)
 import Effect
 import Gen.Model
 import Gen.Pages as Pages
 import Gen.Route as Route
-import Html
-import Html.Attributes as Attr
 import Lamdera
 import Request
 import Shared

@@ -8,8 +8,8 @@ import Components.Editor exposing (Field, Form)
 import Gen.Params.Editor.ArticleSlug_ exposing (Params)
 import Gen.Route as Route
 import Html exposing (..)
-import Page exposing (Page)
-import Request exposing (Request)
+import Page
+import Request
 import Shared
 import Utils.Route
 import View exposing (View)

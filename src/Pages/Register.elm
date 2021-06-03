@@ -6,8 +6,7 @@ import Bridge exposing (..)
 import Components.UserForm
 import Effect exposing (Effect)
 import Gen.Route as Route
-import Html exposing (..)
-import Page exposing (Page)
+import Page
 import Request exposing (Request)
 import Shared
 import Utils.Route

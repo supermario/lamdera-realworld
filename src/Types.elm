@@ -1,11 +1,10 @@
 module Types exposing (..)
 
-import Api.Article exposing (Article, ArticleStore, Slug)
+import Api.Article exposing (ArticleStore, Slug)
 import Api.Article.Comment exposing (Comment)
-import Api.Data exposing (..)
-import Api.User exposing (Email, User, UserFull, UserId)
+import Api.User exposing (User, UserFull, UserId)
 import Bridge
-import Browser exposing (UrlRequest)
+import Browser
 import Browser.Navigation exposing (Key)
 import Dict exposing (Dict)
 import Gen.Pages as Pages
