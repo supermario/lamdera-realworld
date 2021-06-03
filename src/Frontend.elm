@@ -1,5 +1,6 @@
 module Frontend exposing (..)
 
+import Bridge exposing (..)
 import Browser exposing (UrlRequest(..))
 import Browser.Dom
 import Browser.Navigation as Nav exposing (Key)
@@ -9,12 +10,11 @@ import Gen.Pages as Pages
 import Gen.Route as Route
 import Html
 import Html.Attributes as Attr
-import Json.Encode as E
 import Lamdera
 import Request
 import Shared
 import Task
-import Types exposing (..)
+import Types exposing (FrontendModel, FrontendMsg(..), ToFrontend(..))
 import Url exposing (Url)
 import View
 
@@ -43,7 +43,7 @@ init : Url -> Key -> ( Model, Cmd Msg )
 init url key =
     let
         ( shared, sharedCmd ) =
-            Shared.init (Request.create () url key) E.null
+            Shared.init (Request.create () url key) ()
 
         ( page, effect ) =
             Pages.init (Route.fromUrl url) shared url key
@@ -131,6 +131,9 @@ update msg model =
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
     case msg of
+        PageMsg pageMsg ->
+            update (Page pageMsg) model
+
         NoOpToFrontend ->
             ( model, Cmd.none )
 
@@ -141,9 +144,13 @@ updateFromBackend msg model =
 
 view : Model -> Browser.Document Msg
 view model =
-    Pages.view model.page model.shared model.url model.key
-        |> View.map Page
-        |> View.toBrowserDocument
+    Shared.view (Request.create () model.url model.key)
+        { page =
+            Pages.view model.page model.shared model.url model.key
+                |> View.map Page
+        , toMsg = Shared
+        }
+        model.shared
 
 
 

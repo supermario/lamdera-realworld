@@ -1,10 +1,10 @@
-module Pages.Home_ exposing (Model, Msg, page)
+module Pages.Home_ exposing (Model, Msg(..), page)
 
 import Api.Article exposing (Article)
 import Api.Article.Filters as Filters
-import Api.Article.Tag exposing (Tag)
 import Api.Data exposing (Data)
 import Api.User exposing (User)
+import Bridge exposing (..)
 import Components.ArticleList
 import Html exposing (..)
 import Html.Attributes exposing (class, classList)
@@ -64,7 +64,7 @@ init shared =
     ( model
     , Cmd.batch
         [ fetchArticlesForTab shared model
-        , Api.Article.Tag.list { onResponse = GotTags }
+        , GetTags_Home_ |> sendToBackend
         ]
     )
 
@@ -80,29 +80,24 @@ fetchArticlesForTab :
 fetchArticlesForTab shared model =
     case model.activeTab of
         Global ->
-            Api.Article.list
+            ArticleList_Home_
                 { filters = Filters.create
                 , page = model.page
-                , token = Maybe.map .token shared.user
-                , onResponse = GotArticles
                 }
+                |> sendToBackend
 
         FeedFor user ->
-            Api.Article.feed
-                { token = user.token
-                , page = model.page
-                , onResponse = GotArticles
+            ArticleFeed_Home_
+                { page = model.page
                 }
+                |> sendToBackend
 
         TagFilter tag ->
-            Api.Article.list
-                { filters =
-                    Filters.create
-                        |> Filters.withTag tag
+            ArticleList_Home_
+                { filters = Filters.create |> Filters.withTag tag
                 , page = model.page
-                , token = Maybe.map .token shared.user
-                , onResponse = GotArticles
                 }
+                |> sendToBackend
 
 
 
@@ -117,6 +112,10 @@ type Msg
     | ClickedUnfavorite User Article
     | ClickedPage Int
     | UpdatedArticle (Data Article)
+
+
+type alias Tag =
+    String
 
 
 update : Shared.Model -> Msg -> Model -> ( Model, Cmd Msg )
@@ -148,20 +147,18 @@ update shared msg model =
 
         ClickedFavorite user article ->
             ( model
-            , Api.Article.favorite
-                { token = user.token
-                , slug = article.slug
-                , onResponse = UpdatedArticle
+            , ArticleFavorite_Home_
+                { slug = article.slug
                 }
+                |> sendToBackend
             )
 
         ClickedUnfavorite user article ->
             ( model
-            , Api.Article.unfavorite
-                { token = user.token
-                , slug = article.slug
-                , onResponse = UpdatedArticle
+            , ArticleUnfavorite_Home_
+                { slug = article.slug
                 }
+                |> sendToBackend
             )
 
         ClickedPage page_ ->

@@ -1,11 +1,11 @@
-module Pages.Profile.Username_ exposing (Model, Msg, page)
+module Pages.Profile.Username_ exposing (Model, Msg(..), page)
 
 import Api.Article exposing (Article)
 import Api.Article.Filters as Filters
 import Api.Data exposing (Data)
 import Api.Profile exposing (Profile)
-import Api.Token exposing (Token)
 import Api.User exposing (User)
+import Bridge exposing (..)
 import Components.ArticleList
 import Components.IconButton as IconButton
 import Components.NotFound
@@ -50,11 +50,6 @@ type Tab
 
 init : Shared.Model -> Request.With Params -> ( Model, Cmd Msg )
 init shared { params } =
-    let
-        token : Maybe Token
-        token =
-            Maybe.map .token shared.user
-    in
     ( { username = params.username
       , profile = Api.Data.Loading
       , listing = Api.Data.Loading
@@ -62,35 +57,32 @@ init shared { params } =
       , page = 1
       }
     , Cmd.batch
-        [ Api.Profile.get
-            { token = token
-            , username = params.username
-            , onResponse = GotProfile
+        [ ProfileGet_Profile__Username_
+            { username = params.username
             }
-        , fetchArticlesBy token params.username 1
+            |> sendToBackend
+        , fetchArticlesBy params.username 1
         ]
     )
 
 
-fetchArticlesBy : Maybe Token -> String -> Int -> Cmd Msg
-fetchArticlesBy token username page_ =
-    Api.Article.list
-        { token = token
-        , page = page_
+fetchArticlesBy : String -> Int -> Cmd Msg
+fetchArticlesBy username page_ =
+    ArticleList_Username_
+        { page = page_
         , filters = Filters.create |> Filters.byAuthor username
-        , onResponse = GotArticles
         }
+        |> sendToBackend
 
 
-fetchArticlesFavoritedBy : Maybe Token -> String -> Int -> Cmd Msg
-fetchArticlesFavoritedBy token username page_ =
-    Api.Article.list
-        { token = token
-        , page = page_
+fetchArticlesFavoritedBy : String -> Int -> Cmd Msg
+fetchArticlesFavoritedBy username page_ =
+    ArticleList_Username_
+        { page = page_
         , filters =
             Filters.create |> Filters.favoritedBy username
-        , onResponse = GotArticles
         }
+        |> sendToBackend
 
 
 
@@ -119,20 +111,18 @@ update shared msg model =
 
         ClickedFollow user profile ->
             ( model
-            , Api.Profile.follow
-                { token = user.token
-                , username = profile.username
-                , onResponse = GotProfile
+            , ProfileFollow_Profile__Username_
+                { username = profile.username
                 }
+                |> sendToBackend
             )
 
         ClickedUnfollow user profile ->
             ( model
-            , Api.Profile.unfollow
-                { token = user.token
-                , username = profile.username
-                , onResponse = GotProfile
+            , ProfileUnfollow_Profile__Username_
+                { username = profile.username
                 }
+                |> sendToBackend
             )
 
         GotArticles listing ->
@@ -146,7 +136,7 @@ update shared msg model =
                 , listing = Api.Data.Loading
                 , page = 1
               }
-            , fetchArticlesBy (Maybe.map .token shared.user) model.username 1
+            , fetchArticlesBy model.username 1
             )
 
         Clicked FavoritedArticles ->
@@ -155,30 +145,28 @@ update shared msg model =
                 , listing = Api.Data.Loading
                 , page = 1
               }
-            , fetchArticlesFavoritedBy (Maybe.map .token shared.user) model.username 1
+            , fetchArticlesFavoritedBy model.username 1
             )
 
         ClickedFavorite user article ->
             ( model
-            , Api.Article.favorite
-                { token = user.token
-                , slug = article.slug
-                , onResponse = UpdatedArticle
+            , ArticleFavorite_Profile__Username_
+                { slug = article.slug
                 }
+                |> sendToBackend
             )
 
         ClickedUnfavorite user article ->
             ( model
-            , Api.Article.unfavorite
-                { token = user.token
-                , slug = article.slug
-                , onResponse = UpdatedArticle
+            , ArticleUnfavorite_Profile__Username_
+                { slug = article.slug
                 }
+                |> sendToBackend
             )
 
         ClickedPage page_ ->
             let
-                fetch : Maybe Token -> String -> Int -> Cmd Msg
+                fetch : String -> Int -> Cmd Msg
                 fetch =
                     case model.selectedTab of
                         MyArticles ->
@@ -192,7 +180,6 @@ update shared msg model =
                 , page = page_
               }
             , fetch
-                (shared.user |> Maybe.map .token)
                 model.username
                 page_
             )

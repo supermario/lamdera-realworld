@@ -1,10 +1,11 @@
-module Pages.Article.Slug_ exposing (Model, Msg, page)
+module Pages.Article.Slug_ exposing (Model, Msg(..), page)
 
 import Api.Article exposing (Article)
 import Api.Article.Comment exposing (Comment)
 import Api.Data exposing (Data)
 import Api.Profile exposing (Profile)
 import Api.User exposing (User)
+import Bridge exposing (..)
 import Components.IconButton as IconButton
 import Gen.Params.Article.Slug_ exposing (Params)
 import Gen.Route as Route
@@ -49,16 +50,14 @@ init shared { params } =
       , commentText = ""
       }
     , Cmd.batch
-        [ Api.Article.get
+        [ ArticleGet_Article__Slug_
             { slug = params.slug
-            , token = shared.user |> Maybe.map .token
-            , onResponse = GotArticle
             }
-        , Api.Article.Comment.get
-            { token = shared.user |> Maybe.map .token
-            , articleSlug = params.slug
-            , onResponse = GotComments
+            |> sendToBackend
+        , ArticleCommentGet_Article__Slug_
+            { articleSlug = params.slug
             }
+            |> sendToBackend
         ]
     )
 
@@ -94,29 +93,26 @@ update req msg model =
 
         ClickedFavorite user article ->
             ( model
-            , Api.Article.favorite
-                { token = user.token
-                , slug = article.slug
-                , onResponse = GotArticle
+            , ArticleFavorite_Article__Slug_
+                { slug = article.slug
                 }
+                |> sendToBackend
             )
 
         ClickedUnfavorite user article ->
             ( model
-            , Api.Article.unfavorite
-                { token = user.token
-                , slug = article.slug
-                , onResponse = GotArticle
+            , ArticleUnfavorite_Article__Slug_
+                { slug = article.slug
                 }
+                |> sendToBackend
             )
 
         ClickedDeleteArticle user article ->
             ( model
-            , Api.Article.delete
-                { token = user.token
-                , slug = article.slug
-                , onResponse = DeletedArticle
+            , ArticleDelete_Article__Slug_
+                { slug = article.slug
                 }
+                |> sendToBackend
             )
 
         DeletedArticle _ ->
@@ -141,20 +137,18 @@ update req msg model =
 
         ClickedFollow user profile ->
             ( model
-            , Api.Profile.follow
-                { token = user.token
-                , username = profile.username
-                , onResponse = GotAuthor
+            , ProfileFollow_Article__Slug_
+                { username = profile.username
                 }
+                |> sendToBackend
             )
 
         ClickedUnfollow user profile ->
             ( model
-            , Api.Profile.unfollow
-                { token = user.token
-                , username = profile.username
-                , onResponse = GotAuthor
+            , ProfileUnfollow_Article__Slug_
+                { username = profile.username
                 }
+                |> sendToBackend
             )
 
         GotComments comments ->
@@ -173,12 +167,11 @@ update req msg model =
 
             else
                 ( { model | commentText = "" }
-                , Api.Article.Comment.create
-                    { token = user.token
-                    , articleSlug = article.slug
+                , ArticleCommentCreate_Article__Slug_
+                    { articleSlug = article.slug
                     , comment = { body = model.commentText }
-                    , onResponse = CreatedComment
                     }
+                    |> sendToBackend
                 )
 
         CreatedComment comment ->
@@ -193,12 +186,11 @@ update req msg model =
 
         ClickedDeleteComment user article comment ->
             ( model
-            , Api.Article.Comment.delete
-                { token = user.token
-                , articleSlug = article.slug
+            , ArticleCommentDelete_Article__Slug_
+                { articleSlug = article.slug
                 , commentId = comment.id
-                , onResponse = DeletedComment
                 }
+                |> sendToBackend
             )
 
         DeletedComment id ->
