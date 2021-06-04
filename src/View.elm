@@ -1,4 +1,4 @@
-module View exposing (View, map, none, placeholder)
+module View exposing (View, map, none, placeholder, toBrowserDocument)
 
 import Html exposing (Html)
 
@@ -26,3 +26,7 @@ map fn view =
     { title = view.title
     , body = List.map (Html.map fn) view.body
     }
+
+
+toBrowserDocument =
+    identity
