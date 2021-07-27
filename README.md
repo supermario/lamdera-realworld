@@ -22,17 +22,6 @@ for full-stack web apps
 
 Check out the [the source code](./src) to get a feel for the project structure!
 
-```
-src/
-  Types.elm
-  Bridge.elm
-  Frontend.elm
-  Backend.elm
-  Api/...
-  Components/...
-  Pages/...
-  Utils/...
-```
 
 # Getting started
 
