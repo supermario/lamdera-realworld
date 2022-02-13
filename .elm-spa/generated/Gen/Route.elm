@@ -8,10 +8,10 @@ import Gen.Params.Editor
 import Gen.Params.Home_
 import Gen.Params.Login
 import Gen.Params.NotFound
-import Gen.Params.Register
 import Gen.Params.Settings
 import Gen.Params.Article.Slug_
 import Gen.Params.Editor.ArticleSlug_
+import Gen.Params.Login.Provider_.Callback
 import Gen.Params.Profile.Username_
 import Url exposing (Url)
 import Url.Parser as Parser exposing ((</>), Parser)
@@ -22,10 +22,10 @@ type Route
     | Home_
     | Login
     | NotFound
-    | Register
     | Settings
     | Article__Slug_ { slug : String }
     | Editor__ArticleSlug_ { articleSlug : String }
+    | Login__Provider___Callback { provider : String }
     | Profile__Username_ { username : String }
 
 
@@ -40,11 +40,11 @@ routes =
     , Parser.map Editor Gen.Params.Editor.parser
     , Parser.map Login Gen.Params.Login.parser
     , Parser.map NotFound Gen.Params.NotFound.parser
-    , Parser.map Register Gen.Params.Register.parser
     , Parser.map Settings Gen.Params.Settings.parser
     , Parser.map Editor__ArticleSlug_ Gen.Params.Editor.ArticleSlug_.parser
     , Parser.map Article__Slug_ Gen.Params.Article.Slug_.parser
     , Parser.map Profile__Username_ Gen.Params.Profile.Username_.parser
+    , Parser.map Login__Provider___Callback Gen.Params.Login.Provider_.Callback.parser
     ]
 
 
@@ -68,9 +68,6 @@ toHref route =
         NotFound ->
             joinAsHref [ "not-found" ]
     
-        Register ->
-            joinAsHref [ "register" ]
-    
         Settings ->
             joinAsHref [ "settings" ]
     
@@ -79,6 +76,9 @@ toHref route =
     
         Editor__ArticleSlug_ params ->
             joinAsHref [ "editor", params.articleSlug ]
+    
+        Login__Provider___Callback params ->
+            joinAsHref [ "login", params.provider, "callback" ]
     
         Profile__Username_ params ->
             joinAsHref [ "profile", params.username ]

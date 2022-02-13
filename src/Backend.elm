@@ -5,9 +5,13 @@ import Api.Article.Filters as Filters exposing (Filters(..))
 import Api.Data exposing (Data(..))
 import Api.Profile exposing (Profile)
 import Api.User exposing (Email, UserFull)
+import Auth
+import Auth.Flow
+import AuthImplementation
 import Bridge exposing (..)
 import Dict
 import Dict.Extra as Dict
+import Env
 import Gen.Msg
 import Lamdera exposing (..)
 import List.Extra as List
@@ -17,7 +21,6 @@ import Pages.Editor.ArticleSlug_
 import Pages.Home_
 import Pages.Login
 import Pages.Profile.Username_
-import Pages.Register
 import Pages.Settings
 import Task
 import Time
@@ -44,6 +47,7 @@ init =
       , users = Dict.empty
       , articles = Dict.empty
       , comments = Dict.empty
+      , pendingAuths = Dict.empty
       }
     , Cmd.none
     )
@@ -52,9 +56,12 @@ init =
 update : BackendMsg -> Model -> ( Model, Cmd BackendMsg )
 update msg model =
     case msg of
+        AuthBackendMsg authMsg ->
+            Auth.Flow.backendUpdate (AuthImplementation.backendConfig model) authMsg
+
         CheckSession sid cid ->
             model
-                |> getSessionUser sid
+                |> AuthImplementation.getSessionUser sid
                 |> Maybe.map (\user -> ( model, sendToFrontend cid (ActiveSession (Api.User.toUser user)) ))
                 |> Maybe.withDefault ( model, Cmd.none )
 
@@ -145,7 +152,7 @@ updateFromFrontend sessionId clientId msg model =
                     model |> loadArticleBySlug slug sessionId
 
                 userM =
-                    model |> getSessionUser sessionId
+                    model |> AuthImplementation.getSessionUser sessionId
             in
             fn <|
                 case ( res, userM ) of
@@ -160,6 +167,9 @@ updateFromFrontend sessionId clientId msg model =
                         Failure [ "you do not have permission for this article" ]
     in
     case msg of
+        AuthToBackend authToBackend ->
+            Auth.Flow.updateFromFrontend (AuthImplementation.backendConfig model) clientId sessionId authToBackend model
+
         SignedOut user ->
             ( { model | sessions = model.sessions |> Dict.remove sessionId }, Cmd.none )
 
@@ -180,7 +190,7 @@ updateFromFrontend sessionId clientId msg model =
         ArticleFeed_Home_ { page } ->
             let
                 userM =
-                    model |> getSessionUser sessionId
+                    model |> AuthImplementation.getSessionUser sessionId
 
                 articleList =
                     case userM of
@@ -234,7 +244,7 @@ updateFromFrontend sessionId clientId msg model =
                         |> Dict.get slug
                         |> Maybe.map Success
                         |> Maybe.withDefault (Failure [ "no article with slug: " ++ slug ])
-                        |> Api.Data.map (loadArticleFromStore model (model |> getSessionUser sessionId))
+                        |> Api.Data.map (loadArticleFromStore model (model |> AuthImplementation.getSessionUser sessionId))
             in
             ( { model | articles = articles }, send_ (PageMsg (Gen.Msg.Editor__ArticleSlug_ (Pages.Editor.ArticleSlug_.UpdatedArticle res))) )
 
@@ -248,7 +258,7 @@ updateFromFrontend sessionId clientId msg model =
         ArticleCreate_Editor { article } ->
             let
                 userM =
-                    model |> getSessionUser sessionId
+                    model |> AuthImplementation.getSessionUser sessionId
             in
             ( model, Time.now |> Task.perform (\t -> ArticleCreated t userM clientId article) )
 
@@ -312,7 +322,7 @@ updateFromFrontend sessionId clientId msg model =
         ArticleCommentCreate_Article__Slug_ { articleSlug, comment } ->
             let
                 userM =
-                    model |> getSessionUser sessionId
+                    model |> AuthImplementation.getSessionUser sessionId
             in
             ( model, Time.now |> Task.perform (\t -> ArticleCommentCreated t userM clientId articleSlug comment) )
 
@@ -359,53 +369,10 @@ updateFromFrontend sessionId clientId msg model =
                 model
                 (\r -> send_ (PageMsg (Gen.Msg.Article__Slug_ (Pages.Article.Slug_.GotAuthor r))))
 
-        UserAuthentication_Login { params } ->
-            let
-                ( response, cmd ) =
-                    model.users
-                        |> Dict.find (\k u -> u.email == params.email)
-                        |> Maybe.map
-                            (\( k, u ) ->
-                                if u.password == params.password then
-                                    ( Success (Api.User.toUser u), renewSession u.id sessionId clientId )
-
-                                else
-                                    ( Failure [ "email or password is invalid" ], Cmd.none )
-                            )
-                        |> Maybe.withDefault ( Failure [ "email or password is invalid" ], Cmd.none )
-            in
-            ( model, Cmd.batch [ send_ (PageMsg (Gen.Msg.Login (Pages.Login.GotUser response))), cmd ] )
-
-        UserRegistration_Register { params } ->
-            let
-                ( model_, cmd, res ) =
-                    if model.users |> Dict.any (\k u -> u.email == params.email) then
-                        ( model, Cmd.none, Failure [ "email address already taken" ] )
-
-                    else
-                        let
-                            user_ =
-                                { id = Dict.size model.users
-                                , email = params.email
-                                , username = params.username
-                                , bio = Nothing
-                                , image = "https://static.productionready.io/images/smiley-cyrus.jpg"
-                                , password = params.password
-                                , favorites = []
-                                , following = []
-                                }
-                        in
-                        ( { model | users = model.users |> Dict.insert user_.id user_ }
-                        , renewSession user_.id sessionId clientId
-                        , Success (Api.User.toUser user_)
-                        )
-            in
-            ( model_, Cmd.batch [ cmd, send_ (PageMsg (Gen.Msg.Register (Pages.Register.GotUser res))) ] )
-
         UserUpdate_Settings { params } ->
             let
                 ( model_, res ) =
-                    case model |> getSessionUser sessionId of
+                    case model |> AuthImplementation.getSessionUser sessionId of
                         Just user ->
                             let
                                 user_ =
@@ -413,7 +380,6 @@ updateFromFrontend sessionId clientId msg model =
                                         | username = params.username
 
                                         -- , email = params.email
-                                        , password = params.password |> Maybe.withDefault user.password
                                         , image = params.image
                                         , bio = Just params.bio
                                     }
@@ -427,13 +393,6 @@ updateFromFrontend sessionId clientId msg model =
 
         NoOpToBackend ->
             ( model, Cmd.none )
-
-
-getSessionUser : SessionId -> Model -> Maybe UserFull
-getSessionUser sid model =
-    model.sessions
-        |> Dict.get sid
-        |> Maybe.andThen (\session -> model.users |> Dict.get session.userId)
 
 
 renewSession email sid cid =
@@ -450,7 +409,7 @@ getListing model sessionId (Filters { tag, author, favorited }) page =
                 |> Filters.byAuthor author model.users
 
         enriched =
-            filtered |> Dict.map (\slug article -> loadArticleFromStore model (model |> getSessionUser sessionId) article)
+            filtered |> Dict.map (\slug article -> loadArticleFromStore model (model |> AuthImplementation.getSessionUser sessionId) article)
 
         grouped =
             enriched |> Dict.values |> List.greedyGroupsOf Api.Article.itemsPerPage
@@ -470,7 +429,7 @@ loadArticleBySlug slug sid model =
         |> Dict.get slug
         |> Maybe.map Success
         |> Maybe.withDefault (Failure [ "no article with slug: " ++ slug ])
-        |> Api.Data.map (loadArticleFromStore model (model |> getSessionUser sid))
+        |> Api.Data.map (loadArticleFromStore model (model |> AuthImplementation.getSessionUser sid))
 
 
 uniqueSlug : Model -> String -> Int -> String
@@ -497,7 +456,7 @@ favoriteArticle sessionId slug model toResponseCmd =
                 |> loadArticleBySlug slug sessionId
                 |> Api.Data.map (\a -> { a | favorited = True })
     in
-    case model |> getSessionUser sessionId of
+    case model |> AuthImplementation.getSessionUser sessionId of
         Just user ->
             ( if model.articles |> Dict.member slug then
                 model |> updateUser { user | favorites = (slug :: user.favorites) |> List.unique }
@@ -519,7 +478,7 @@ unfavoriteArticle sessionId slug model toResponseCmd =
                 |> loadArticleBySlug slug sessionId
                 |> Api.Data.map (\a -> { a | favorited = False })
     in
-    case model |> getSessionUser sessionId of
+    case model |> AuthImplementation.getSessionUser sessionId of
         Just user ->
             ( model |> updateUser { user | favorites = user.favorites |> List.remove slug }
             , toResponseCmd res
@@ -537,7 +496,7 @@ followUser sessionId email model toResponseCmd =
                 |> Maybe.map (\a -> Success { a | following = True })
                 |> Maybe.withDefault (Failure [ "invalid user" ])
     in
-    case model |> getSessionUser sessionId of
+    case model |> AuthImplementation.getSessionUser sessionId of
         Just user ->
             ( case model.users |> Dict.find (\l u -> u.email == email) of
                 Just ( _, follow ) ->
@@ -562,7 +521,7 @@ unfollowUser sessionId email model toResponseCmd =
                         |> Api.User.toProfile
                         |> (\a -> Success { a | following = False })
             in
-            case model |> getSessionUser sessionId of
+            case model |> AuthImplementation.getSessionUser sessionId of
                 Just user ->
                     ( model |> updateUser { user | following = user.following |> List.remove followed.id }
                     , toResponseCmd res

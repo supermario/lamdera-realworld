@@ -2,6 +2,8 @@ module Pages.Login exposing (Model, Msg(..), page)
 
 import Api.Data exposing (Data)
 import Api.User exposing (User)
+import Auth.Common
+import Auth.Flow
 import Bridge exposing (..)
 import Components.UserForm
 import Effect exposing (Effect)
@@ -9,6 +11,7 @@ import Gen.Route as Route
 import Page
 import Request exposing (Request)
 import Shared
+import Url exposing (Url)
 import Utils.Route
 import View exposing (View)
 
@@ -16,7 +19,7 @@ import View exposing (View)
 page : Shared.Model -> Request -> Page.With Model Msg
 page shared req =
     Page.advanced
-        { init = init shared
+        { init = init shared req
         , update = update req
         , subscriptions = subscriptions
         , view = view
@@ -28,24 +31,24 @@ page shared req =
 
 
 type alias Model =
-    { user : Data User
-    , email : String
+    { email : String
     , password : String
+    , authFlow : Auth.Common.Flow
+    , authRedirectBaseUrl : Url
     }
 
 
-init : Shared.Model -> ( Model, Effect Msg )
-init shared =
-    ( Model
-        (case shared.user of
-            Just user ->
-                Api.Data.Success user
-
-            Nothing ->
-                Api.Data.NotAsked
-        )
-        ""
-        ""
+init : Shared.Model -> Request -> ( Model, Effect Msg )
+init shared req =
+    let
+        url =
+            req.url
+    in
+    ( { email = ""
+      , password = ""
+      , authFlow = Auth.Common.Idle
+      , authRedirectBaseUrl = { url | query = Nothing, fragment = Nothing }
+      }
     , Effect.none
     )
 
@@ -56,8 +59,7 @@ init shared =
 
 type Msg
     = Updated Field String
-    | AttemptedSignIn
-    | GotUser (Data User)
+    | GithubSigninRequested
 
 
 type Field
@@ -78,31 +80,18 @@ update req msg model =
             , Effect.none
             )
 
-        AttemptedSignIn ->
-            ( model
-            , (Effect.fromCmd << sendToBackend) <|
-                UserAuthentication_Login
-                    { params =
-                        { email = model.email
-                        , password = model.password
-                        }
-                    }
-            )
-
-        GotUser user ->
-            case Api.Data.toMaybe user of
-                Just user_ ->
-                    ( { model | user = user }
-                    , Effect.batch
-                        [ Effect.fromCmd (Utils.Route.navigate req.key Route.Home_)
-                        , Effect.fromShared (Shared.SignedInUser user_)
-                        ]
-                    )
-
-                Nothing ->
-                    ( { model | user = user }
-                    , Effect.none
-                    )
+        GithubSigninRequested ->
+            -- ( model
+            -- , (Effect.fromCmd << sendToBackend) <|
+            --     UserAuthentication_Login
+            --         { params =
+            --             { email = model.email
+            --             , password = model.password
+            --             }
+            --         }
+            -- )
+            Tuple.mapSecond (Effect.fromCmd << sendToBackend << AuthToBackend) <|
+                Auth.Flow.signInRequested "OAuthGithub" model Nothing
 
 
 subscriptions : Model -> Sub Msg
@@ -119,22 +108,16 @@ view model =
     { title = "Sign in"
     , body =
         [ Components.UserForm.view
-            { user = model.user
-            , label = "Sign in"
-            , onFormSubmit = AttemptedSignIn
-            , alternateLink = { label = "Need an account?", route = Route.Register }
-            , fields =
-                [ { label = "Email"
-                  , type_ = "email"
-                  , value = model.email
-                  , onInput = Updated Email
-                  }
-                , { label = "Password"
-                  , type_ = "password"
-                  , value = model.password
-                  , onInput = Updated Password
-                  }
-                ]
+            { title = "Login"
+            , label = "Login with Github"
+            , onFormSubmit = GithubSigninRequested
+            , inProgress =
+                case model.authFlow of
+                    Auth.Common.Idle ->
+                        False
+
+                    _ ->
+                        True
             }
         ]
     }

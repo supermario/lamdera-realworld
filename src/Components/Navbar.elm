@@ -30,6 +30,7 @@ view options =
                                     [ a
                                         [ class "nav-link"
                                         , Events.onClick options.onSignOut
+                                        , href "#"
                                         ]
                                         [ text "Sign out" ]
                                     ]
@@ -39,8 +40,7 @@ view options =
                     Nothing ->
                         List.map (viewLink options.currentRoute) <|
                             [ ( "Home", Route.Home_ )
-                            , ( "Sign in", Route.Login )
-                            , ( "Sign up", Route.Register )
+                            , ( "Login", Route.Login )
                             ]
             ]
         ]

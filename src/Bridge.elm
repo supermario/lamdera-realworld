@@ -2,6 +2,7 @@ module Bridge exposing (..)
 
 import Api.Article.Filters exposing (Filters)
 import Api.User exposing (User)
+import Auth.Common
 import Lamdera
 
 
@@ -10,7 +11,8 @@ sendToBackend =
 
 
 type ToBackend
-    = SignedOut User
+    = AuthToBackend Auth.Common.ToBackend
+    | SignedOut User
       -- Req/resp paired messages
     | GetTags_Home_
     | ArticleList_Home_ { filters : Filters, page : Int }
@@ -42,8 +44,6 @@ type ToBackend
     | ProfileUnfollow_Profile__Username_ { username : String }
     | ProfileFollow_Article__Slug_ { username : String }
     | ProfileUnfollow_Article__Slug_ { username : String }
-    | UserAuthentication_Login { params : { email : String, password : String } }
-    | UserRegistration_Register { params : { username : String, email : String, password : String } }
     | UserUpdate_Settings
         { params :
             { username : String

@@ -3,6 +3,7 @@ module Types exposing (..)
 import Api.Article exposing (ArticleStore, Slug)
 import Api.Article.Comment exposing (Comment)
 import Api.User exposing (User, UserFull, UserId)
+import Auth.Common
 import Bridge
 import Browser
 import Browser.Navigation exposing (Key)
@@ -19,6 +20,8 @@ type alias FrontendModel =
     , key : Key
     , shared : Shared.Model
     , page : Pages.Model
+    , authFlow : Auth.Common.Flow
+    , authRedirectBaseUrl : Url
     }
 
 
@@ -27,6 +30,7 @@ type alias BackendModel =
     , users : Dict Int UserFull
     , articles : Dict Slug ArticleStore
     , comments : Dict Slug (Dict Int Comment)
+    , pendingAuths : Dict SessionId Auth.Common.PendingAuth
     }
 
 
@@ -47,7 +51,8 @@ type alias ToBackend =
 
 
 type BackendMsg
-    = CheckSession SessionId ClientId
+    = AuthBackendMsg Auth.Common.BackendMsg
+    | CheckSession SessionId ClientId
     | RenewSession UserId SessionId ClientId Time.Posix
     | ArticleCreated Time.Posix (Maybe UserFull) ClientId { title : String, description : String, body : String, tags : List String }
     | ArticleCommentCreated Time.Posix (Maybe UserFull) ClientId Slug { body : String }
@@ -55,6 +60,7 @@ type BackendMsg
 
 
 type ToFrontend
-    = ActiveSession User
+    = AuthToFrontend Auth.Common.ToFrontend
+    | ActiveSession User
     | PageMsg Pages.Msg
     | NoOpToFrontend

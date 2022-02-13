@@ -1,5 +1,7 @@
 module Frontend exposing (..)
 
+import Auth.Common
+import AuthImplementation
 import Browser
 import Browser.Dom
 import Browser.Navigation as Nav exposing (Key)
@@ -45,7 +47,14 @@ init url key =
         ( page, effect ) =
             Pages.init (Route.fromUrl url) shared url key
     in
-    ( FrontendModel url key shared page
+    ( --FrontendModel url key shared page
+      { url = url
+      , key = key
+      , shared = shared
+      , page = page
+      , authFlow = Auth.Common.Idle
+      , authRedirectBaseUrl = { url | query = Nothing, fragment = Nothing }
+      }
     , Cmd.batch
         [ Cmd.map Shared sharedCmd
         , Effect.toCmd ( Shared, Page ) effect
@@ -128,6 +137,9 @@ update msg model =
 updateFromBackend : ToFrontend -> Model -> ( Model, Cmd FrontendMsg )
 updateFromBackend msg model =
     case msg of
+        AuthToFrontend authToFrontendMsg ->
+            AuthImplementation.updateFromBackend authToFrontendMsg model
+
         ActiveSession user ->
             update (Shared <| Shared.SignedInUser user) model
 

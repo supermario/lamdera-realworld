@@ -7,10 +7,10 @@ import Gen.Params.Editor
 import Gen.Params.Home_
 import Gen.Params.Login
 import Gen.Params.NotFound
-import Gen.Params.Register
 import Gen.Params.Settings
 import Gen.Params.Article.Slug_
 import Gen.Params.Editor.ArticleSlug_
+import Gen.Params.Login.Provider_.Callback
 import Gen.Params.Profile.Username_
 import Gen.Model as Model
 import Gen.Msg as Msg
@@ -20,10 +20,10 @@ import Pages.Editor
 import Pages.Home_
 import Pages.Login
 import Pages.NotFound
-import Pages.Register
 import Pages.Settings
 import Pages.Article.Slug_
 import Pages.Editor.ArticleSlug_
+import Pages.Login.Provider_.Callback
 import Pages.Profile.Username_
 import Request exposing (Request)
 import Shared
@@ -55,9 +55,6 @@ init route =
         Route.NotFound ->
             pages.notFound.init ()
     
-        Route.Register ->
-            pages.register.init ()
-    
         Route.Settings ->
             pages.settings.init ()
     
@@ -66,6 +63,9 @@ init route =
     
         Route.Editor__ArticleSlug_ params ->
             pages.editor__articleSlug_.init params
+    
+        Route.Login__Provider___Callback params ->
+            pages.login__provider___callback.init params
     
         Route.Profile__Username_ params ->
             pages.profile__username_.init params
@@ -83,9 +83,6 @@ update msg_ model_ =
         ( Msg.Login msg, Model.Login params model ) ->
             pages.login.update params msg model
     
-        ( Msg.Register msg, Model.Register params model ) ->
-            pages.register.update params msg model
-    
         ( Msg.Settings msg, Model.Settings params model ) ->
             pages.settings.update params msg model
     
@@ -94,6 +91,9 @@ update msg_ model_ =
     
         ( Msg.Editor__ArticleSlug_ msg, Model.Editor__ArticleSlug_ params model ) ->
             pages.editor__articleSlug_.update params msg model
+    
+        ( Msg.Login__Provider___Callback msg, Model.Login__Provider___Callback params model ) ->
+            pages.login__provider___callback.update params msg model
     
         ( Msg.Profile__Username_ msg, Model.Profile__Username_ params model ) ->
             pages.profile__username_.update params msg model
@@ -120,9 +120,6 @@ view model_ =
         Model.NotFound params ->
             pages.notFound.view params ()
     
-        Model.Register params model ->
-            pages.register.view params model
-    
         Model.Settings params model ->
             pages.settings.view params model
     
@@ -131,6 +128,9 @@ view model_ =
     
         Model.Editor__ArticleSlug_ params model ->
             pages.editor__articleSlug_.view params model
+    
+        Model.Login__Provider___Callback params model ->
+            pages.login__provider___callback.view params model
     
         Model.Profile__Username_ params model ->
             pages.profile__username_.view params model
@@ -154,9 +154,6 @@ subscriptions model_ =
         Model.NotFound params ->
             pages.notFound.subscriptions params ()
     
-        Model.Register params model ->
-            pages.register.subscriptions params model
-    
         Model.Settings params model ->
             pages.settings.subscriptions params model
     
@@ -165,6 +162,9 @@ subscriptions model_ =
     
         Model.Editor__ArticleSlug_ params model ->
             pages.editor__articleSlug_.subscriptions params model
+    
+        Model.Login__Provider___Callback params model ->
+            pages.login__provider___callback.subscriptions params model
     
         Model.Profile__Username_ params model ->
             pages.profile__username_.subscriptions params model
@@ -179,10 +179,10 @@ pages :
     , home_ : Bundle Gen.Params.Home_.Params Pages.Home_.Model Pages.Home_.Msg
     , login : Bundle Gen.Params.Login.Params Pages.Login.Model Pages.Login.Msg
     , notFound : Static Gen.Params.NotFound.Params
-    , register : Bundle Gen.Params.Register.Params Pages.Register.Model Pages.Register.Msg
     , settings : Bundle Gen.Params.Settings.Params Pages.Settings.Model Pages.Settings.Msg
     , article__slug_ : Bundle Gen.Params.Article.Slug_.Params Pages.Article.Slug_.Model Pages.Article.Slug_.Msg
     , editor__articleSlug_ : Bundle Gen.Params.Editor.ArticleSlug_.Params Pages.Editor.ArticleSlug_.Model Pages.Editor.ArticleSlug_.Msg
+    , login__provider___callback : Bundle Gen.Params.Login.Provider_.Callback.Params Pages.Login.Provider_.Callback.Model Pages.Login.Provider_.Callback.Msg
     , profile__username_ : Bundle Gen.Params.Profile.Username_.Params Pages.Profile.Username_.Model Pages.Profile.Username_.Msg
     }
 pages =
@@ -190,10 +190,10 @@ pages =
     , home_ = bundle Pages.Home_.page Model.Home_ Msg.Home_
     , login = bundle Pages.Login.page Model.Login Msg.Login
     , notFound = static Pages.NotFound.view Model.NotFound
-    , register = bundle Pages.Register.page Model.Register Msg.Register
     , settings = bundle Pages.Settings.page Model.Settings Msg.Settings
     , article__slug_ = bundle Pages.Article.Slug_.page Model.Article__Slug_ Msg.Article__Slug_
     , editor__articleSlug_ = bundle Pages.Editor.ArticleSlug_.page Model.Editor__ArticleSlug_ Msg.Editor__ArticleSlug_
+    , login__provider___callback = bundle Pages.Login.Provider_.Callback.page Model.Login__Provider___Callback Msg.Login__Provider___Callback
     , profile__username_ = bundle Pages.Profile.Username_.page Model.Profile__Username_ Msg.Profile__Username_
     }
 
