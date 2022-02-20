@@ -1,0 +1,3 @@
+[submodule "vendor-lamdera-auth"]
+	path = vendor-lamdera-auth
+	url = git@github.com:lamdera/auth.git
