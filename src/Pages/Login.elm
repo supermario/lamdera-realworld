@@ -81,17 +81,8 @@ update req msg model =
             )
 
         GithubSigninRequested ->
-            -- ( model
-            -- , (Effect.fromCmd << sendToBackend) <|
-            --     UserAuthentication_Login
-            --         { params =
-            --             { email = model.email
-            --             , password = model.password
-            --             }
-            --         }
-            -- )
-            Tuple.mapSecond (Effect.fromCmd << sendToBackend << AuthToBackend) <|
-                Auth.Flow.signInRequested "OAuthGithub" model Nothing
+            Auth.Flow.signInRequested "OAuthGithub" model Nothing
+                |> Tuple.mapSecond (AuthToBackend >> sendToBackend >> Effect.fromCmd)
 
 
 subscriptions : Model -> Sub Msg

@@ -47,8 +47,7 @@ init url key =
         ( page, effect ) =
             Pages.init (Route.fromUrl url) shared url key
     in
-    ( --FrontendModel url key shared page
-      { url = url
+    ( { url = url
       , key = key
       , shared = shared
       , page = page
